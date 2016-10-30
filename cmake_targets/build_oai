@@ -24,7 +24,7 @@
 # brief OAI automated build tool that can be used to install, compile, run OAI.
 # author  Navid Nikaein, Lionel GAUTHIER, Laurent Thomas
 
-set -e
+set -x
 
 ################################
 # include helper functions
@@ -449,7 +449,7 @@ function main() {
     echo "set ( T_TRACER $T_TRACER )"              >>  $cmake_file
     echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
     cd  $DIR/$lte_build_dir/build
-    cmake ..
+    $CMAKE ..
   fi
 
   if [ "$eNB" = "1" -o "$UE" = "1" ] ; then
@@ -478,7 +478,7 @@ function main() {
 
 #    mkdir -p $DIR/at_commands/build
 #    cd $DIR/at_commands/build
-#    cmake ..
+#    $CMAKE ..
 #    compilations \
 #      at_commands at_nas_ue \
 #      at_nas_ue $dbin/at_nas_ue
@@ -487,7 +487,7 @@ function main() {
     mkdir -p $DIR/nas_sim_tools/build
     cd $DIR/nas_sim_tools/build
     
-    cmake ..
+    $CMAKE ..
     compilations \
       nas_sim_tools usim \
       usim $dbin/usim
@@ -514,7 +514,7 @@ function main() {
     mkdir -p build
     cd build
     rm -f *sim
-    cmake ..
+    $CMAKE ..
   fi
 
   if [ "$SIMUS_PHY" = "1" ] ; then
@@ -589,7 +589,7 @@ function main() {
     [ "$CLEAN" = "1" ] && rm -rf $DIR/$oaisim_build_dir/build
     mkdir -p $DIR/$oaisim_build_dir/build
     cd $DIR/$oaisim_build_dir/build
-    cmake ..
+    $CMAKE ..
     compilations \
 	  $oaisim_build_dir $oaisim_exec \
 	  $oaisim_exec $dbin/$oaisim_exec.$REL
@@ -600,7 +600,7 @@ function main() {
     	echo_info "Compiling at_nas_ue"
 	mkdir -p $DIR/at_commands/build
 	cd $DIR/at_commands/build
-	cmake ..
+	$CMAKE ..
 	compilations \
 	    at_commands at_nas_ue \
 	    at_nas_ue $dbin/at_nas_ue
@@ -614,7 +614,7 @@ function main() {
 	[ "$CLEAN" = "1" ] && rm -rf $DIR/nas_sim_tools/build
 	mkdir -p $DIR/nas_sim_tools/build
 	cd $DIR/nas_sim_tools/build
-	cmake ..
+	$CMAKE ..
 	compilations \
 	    nas_sim_tools usim \
 	    usim $dbin/usim
@@ -656,7 +656,7 @@ function main() {
     #[ "$CLEAN" = "1" ] && rm -rf $DIR/oaisim_mme_build_oai/build
     #mkdir -p $DIR/oaisim_mme_build_oai/build
     #cd $DIR/oaisim_mme_build_oai/build
-    #cmake ..
+    #$CMAKE ..
     #compilations \
 	#  oaisim_mme_build_oai oaisim_mme \
 	#  oaisim_mme $dbin/oaisim_mme.$REL
@@ -686,7 +686,7 @@ function main() {
      echo "set ( T_TRACER $T_TRACER )"            >>  $cmake_file
      echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file    
      cd $DIR/$rrh_build_dir/build
-     cmake ..
+     $CMAKE ..
      compilations \
 	 rrh_gw rrh_gw \
 	 rrh_gw $dbin/rrh_gw
@@ -781,7 +781,7 @@ fi
     [ "$CLEAN" = "1" ] && rm -rf $OPENAIR_DIR/cmake_targets/doxygen/build
     mkdir -p $OPENAIR_DIR/cmake_targets/doxygen/build
     cd $OPENAIR_DIR/cmake_targets/doxygen/build
-    cmake ..
+    $CMAKE ..
     make doc
     ) >& $doxygen_log
   fi
