@@ -24,7 +24,7 @@
 # brief OAI automated build tool that can be used to install, compile, run OAI.
 # author  Navid Nikaein, Lionel GAUTHIER, Laurent Thomas
 
-set -x
+#set -x
 
 ################################
 # include helper functions
