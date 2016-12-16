@@ -46,16 +46,18 @@ class connection:
             print "ERROR: send: child is dead for '" + self.description + "'"
 
         try:
-            (pid, out) = os.waitpid(p.pid, os.WNOHANG)
+            (pid, out) = os.waitpid(self.pid, os.WNOHANG)
         except Exception, e:
             print "ERROR: waitpid failed for '" + self.description + "'"
+            print e
             (pid, out) = (self.pid, 0)
         if pid != 0:
             print "ERROR: child process dead for '" + self.description + "'"
             try:
                 os.close(self.fd)
-            except:
+            except Exception, e:
                 print "ERROR: close failed for '" + self.description + "'"
+                print e
             self.active = False
             return -1
 

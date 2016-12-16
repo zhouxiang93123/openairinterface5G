@@ -4,6 +4,7 @@ import os, re
 import xml.etree.ElementTree as ET
 from ssh import connection
 from utils import test_in_list, quickshell
+from task import new_task
 
 #p = connection('EPC ALU HSS', 'mozart', 'roux', 'linuxA')
 
@@ -15,9 +16,9 @@ from utils import test_in_list, quickshell
 
 oai_user         = os.environ.get('OAI_USER')
 oai_password     = os.environ.get('OAI_PASS')
-requested_tests  = os.environ.get('OAI_TEST_CASE_GROUP')
-machines         = os.environ.get('MACHINELIST')
-generic_machines = os.environ.get('MACHINELISTGENERIC')
+requested_tests  = os.environ.get('OAI_TEST_CASE_GROUP') .replace('"','')
+machines         = os.environ.get('MACHINELIST')         .replace('"','')
+generic_machines = os.environ.get('MACHINELISTGENERIC')  .replace('"','')
 result_dir       = os.environ.get('RESULT_DIR')
 nruns_softmodem  = os.environ.get('NRUNS_LTE_SOFTMODEM')
 openair_dir      = os.environ.get('OPENAIR_DIR')
@@ -60,7 +61,7 @@ exclusion_tests=xmlRoot.findtext('TestCaseExclusionList',default='')
 all_tests=xmlRoot.findall('testCase')
 
 exclusion_tests=exclusion_tests.split()
-requested_tests=requested_tests.replace('"', '').split()
+requested_tests=requested_tests.split()
 
 #check that exclusion tests are well formatted
 #(6 digits or less than 6 digits followed by +)
@@ -100,3 +101,21 @@ print "INFO: test for commit " + commit_id
 #get repository URL
 repository_url = quickshell("git config remote.origin.url").replace('\n','')
 print "INFO: repository URL: " + repository_url
+
+#prepare environment for tasks
+env = []
+env.append("REPOSITORY_URL=" + repository_url)
+env.append("COMMIT_ID="      + commit_id)
+
+#clone repository on all machines in the test setup
+tasks=[]
+for machine in machines.split():
+    tasks.append(new_task("actions/clone_repository.bash",
+                          "clone repository on " + machine,
+                          machine,
+                          oai_user,
+                          oai_password,
+                          env))
+for task in tasks:
+    print "wait for task: " + task.description
+    task.wait()
