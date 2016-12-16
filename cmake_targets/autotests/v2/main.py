@@ -3,7 +3,7 @@
 import os, re
 import xml.etree.ElementTree as ET
 from ssh import connection
-from utils import test_in_list
+from utils import test_in_list, quickshell
 
 #p = connection('EPC ALU HSS', 'mozart', 'roux', 'linuxA')
 
@@ -91,26 +91,12 @@ for test in all_tests:
     else:
         print "INFO: test will be skipped: " + test.get('id')
 
-#def ssh_connection(host, user, password):
-#    process = subprocess.Popen(['sshpass', '-p', password,
-#        'ssh', user + '@' + host],
-#        stdin=subprocess.PIPE,
-#        stdout=subprocess.PIPE,
-#        stderr=subprocess.STDOUT)
-#    fcntl.fcntl(process.stdout.fileno(), fcntl.F_SETFL,
-#        fcntl.fcntl(process.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
-#    process.stdin.write('export PS1=OPENAIR_PS1\n')
-#    return process
-#
-#def main():
-#    oai_user     = os.environ.get('OAI_USER')
-#    oai_password = os.environ.get('OAI_PASS')
-#    oai_user = 'roux'
-#    oai_password = 'linuxA'
-#    machine1 = ssh_connection('mozart', oai_user, oai_password)
-#    time.sleep(2)
-#    machine1.terminate()
-#    machine1.kill()
-#    machine1.wait()
-#
-#main()
+#get commit ID to use
+commit_id = quickshell("git rev-parse --verify HEAD").replace('\n','')
+if (len(commit_id) != 20*2):
+    print "ERROR: bad commit '" + commit_id + "'"
+print "INFO: test for commit " + commit_id
+
+#get repository URL
+repository_url = quickshell("git config remote.origin.url").replace('\n','')
+print "INFO: repository URL: " + repository_url
