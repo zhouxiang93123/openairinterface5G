@@ -10,7 +10,8 @@ job1:
     - echo $RESULT_DIR
     - echo $NRUNS_LTE_SOFTMODEM
     - source oaienv
-    - python cmake_targets/autotests/v2/main.py
+    - cd cmake_targets/autotests/v2
+    - python main.py
     - date
   only:
     - triggers

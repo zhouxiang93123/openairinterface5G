@@ -10,17 +10,7 @@ class Task:
         self.password    = password
         self.env         = env
 
-        print description
-        print machine
-        print user
-        print password
-
-        print 'create connection'
         self.connection = connection(description, machine, user, password)
-        print 'done'
-
-        print self.connection.pid
-        print self.connection.fd
 
 #        print "let's read"
 #        try:
