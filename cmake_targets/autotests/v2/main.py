@@ -119,7 +119,7 @@ for machine in machines.split():
                       oai_user,
                       oai_password,
                       env,
-                      openair_dir + "/cmake_targets/autoteasts/log/clone." \
+                      openair_dir + "/cmake_targets/autotests/log/clone." \
                          + machine))
 for task in tasks:
     print "wait for task: " + task.description
