@@ -4,7 +4,7 @@ import os, re
 import xml.etree.ElementTree as ET
 from ssh import connection
 from utils import test_in_list, quickshell
-from task import new_task
+from task import Task
 
 #p = connection('EPC ALU HSS', 'mozart', 'roux', 'linuxA')
 
@@ -102,6 +102,9 @@ print "INFO: test for commit " + commit_id
 repository_url = quickshell("git config remote.origin.url").replace('\n','')
 print "INFO: repository URL: " + repository_url
 
+#create log directory
+quickshell("mkdir -p " + openair_dir + "/cmake_targets/autotests/log")
+
 #prepare environment for tasks
 env = []
 env.append("REPOSITORY_URL=" + repository_url)
@@ -110,12 +113,14 @@ env.append("COMMIT_ID="      + commit_id)
 #clone repository on all machines in the test setup
 tasks=[]
 for machine in machines.split():
-    tasks.append(new_task("actions/clone_repository.bash",
-                          "clone repository on " + machine,
-                          machine,
-                          oai_user,
-                          oai_password,
-                          env))
+    tasks.append(Task("actions/clone_repository.bash",
+                      "clone repository on " + machine,
+                      machine,
+                      oai_user,
+                      oai_password,
+                      env,
+                      openair_dir + "/cmake_targets/autoteasts/log/clone." \
+                         + machine))
 for task in tasks:
     print "wait for task: " + task.description
     task.wait()

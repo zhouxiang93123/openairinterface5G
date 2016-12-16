@@ -16,4 +16,5 @@ def quickshell(command):
     (retout, reterr) = process.communicate()
     if (process.returncode != 0):
         print "Error: shell command failed: " + command
+        exit(1)
     return retout
