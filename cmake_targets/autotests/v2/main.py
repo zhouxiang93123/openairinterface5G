@@ -60,7 +60,7 @@ exclusion_tests=xmlRoot.findtext('TestCaseExclusionList',default='')
 all_tests=xmlRoot.findall('testCase')
 
 exclusion_tests=exclusion_tests.split()
-requested_tests=requested_tests.split()
+requested_tests=requested_tests.replace('"', '').split()
 
 #check that exclusion tests are well formatted
 #(6 digits or less than 6 digits followed by +)
