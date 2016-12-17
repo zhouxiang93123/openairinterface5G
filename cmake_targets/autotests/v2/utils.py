@@ -1,4 +1,4 @@
-import subprocess
+import subprocess, os
 
 #check if given test is in list
 #it is in list if one of the strings in 'list' is at the beginning of 'test'
@@ -16,5 +16,9 @@ def quickshell(command):
     (retout, reterr) = process.communicate()
     if (process.returncode != 0):
         print "Error: shell command failed: " + command
-        exit(1)
+        os._exit(1)
     return retout
+
+GREEN="\x1b[32m"
+YELLOW="\x1b[33m"
+RESET="\x1b[m"

@@ -1,24 +1,27 @@
 #!/usr/bin/python
 
-import os, re
+import os, re, sys, time
 import xml.etree.ElementTree as ET
-from ssh import connection
 from utils import test_in_list, quickshell
 from task import Task
 
-#p = connection('EPC ALU HSS', 'mozart', 'roux', 'linuxA')
-
-#try:
-#    z = os.read(p.fd, 1024)
-#except Exception, e:
-#    print "nothing returned"
-#    z = ""
+#let's redefine 'stdout' to call flush after each write
+#(looks better in gitlab live logging)
+class Redefine_stdout(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+sys.stdout = Redefine_stdout(sys.stdout)
 
 oai_user         = os.environ.get('OAI_USER')
 oai_password     = os.environ.get('OAI_PASS')
-requested_tests  = os.environ.get('OAI_TEST_CASE_GROUP') .replace('"','')
-machines         = os.environ.get('MACHINELIST')         .replace('"','')
-generic_machines = os.environ.get('MACHINELISTGENERIC')  .replace('"','')
+requested_tests  = os.environ.get('OAI_TEST_CASE_GROUP')
+machines         = os.environ.get('MACHINELIST')
+generic_machines = os.environ.get('MACHINELISTGENERIC')
 result_dir       = os.environ.get('RESULT_DIR')
 nruns_softmodem  = os.environ.get('NRUNS_LTE_SOFTMODEM')
 openair_dir      = os.environ.get('OPENAIR_DIR')
@@ -49,7 +52,11 @@ if (openair_dir      == None) :
         print "variable OPENAIR_DIR is not defined"
         some_undef = True
 if (some_undef == True):
-    exit(1)
+    os._exit(1)
+
+requested_tests  = requested_tests  .replace('"','')
+machines         = machines         .replace('"','')
+generic_machines = generic_machines .replace('"','')
 
 xml_test_file = os.environ.get('OPENAIR_DIR') + \
                 "/cmake_targets/autotests/test_case_list.xml"
@@ -69,7 +76,7 @@ for test in exclusion_tests:
     if     (not re.match('^[0-9]{6}$', test) and
             not re.match('^[0-9]{1,5}\+$', test)):
         print "ERROR: exclusion test is invalidly formatted: " + test
-        exit(1)
+        os._exit(1)
 
 #check that requested tests are well formatted
 #(6 digits or less than 6 digits followed by +)
@@ -80,7 +87,7 @@ for test in requested_tests:
         print "INFO: test group/case requested: " + test
     else:
         print "ERROR: requested test is invalidly formatted: " + test
-        exit(1)
+        os._exit(1)
 
 #get the list of tests to be done
 todo_tests=[]
@@ -122,5 +129,5 @@ for machine in machines.split():
                       openair_dir + "/cmake_targets/autotests/log/clone." \
                          + machine))
 for task in tasks:
-    print "wait for task: " + task.description
+    print "INFO: wait for task: " + task.description
     task.wait()

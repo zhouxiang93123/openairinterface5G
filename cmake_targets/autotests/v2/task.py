@@ -1,7 +1,7 @@
-import os, time, threading, sys, os, errno
-from ssh import connection
+import os, time, threading, sys, os, errno, select
+from connection import connection
 
-import select
+import utils
 
 class ReaderThread(threading.Thread):
     def __init__(self, fdin, logfile):
@@ -12,17 +12,17 @@ class ReaderThread(threading.Thread):
     def run(self):
         try:
             outfile = open(self.logfile, "w")
-        except Exception, e:
+        except BaseException, e:
             print "ERROR: ReaderThread: " + self.logfile
             print e
-            exit(1)
+            os._exit(1)
         while True:
             try:
                (a, b, c) = select.select([ self.fdin ], [], [ self.fdin ])
-            except Exception, e:
+            except BaseException, e:
                print "ERROR: ReaderThread: select failed"
                print e
-               exit(1)
+               os._exit(1)
             try:
                 z = os.read(self.fdin, 1024)
             except OSError, e:
@@ -32,23 +32,23 @@ class ReaderThread(threading.Thread):
                 else:
                   print "ERROR: ReaderThread: unhandled error"
                   print e
-            except Exception, e:
+            except BaseException, e:
                 print "ERROR: ReaderThread: unhandled error"
                 print e
                 break
             try:
                 outfile.write(z)
                 outfile.flush()
-            except Exception, e:
+            except BaseException, e:
                 print "ERROR: ReaderThread: " + self.logfile
                 print e
-                exit(1)
+                os._exit(1)
         try:
             outfile.close()
-        except Exception, e:
+        except BaseException, e:
             print "ERROR: ReaderThread: " + self.logfile
             print e
-            exit(1)
+            os._exit(1)
         #close the pipe, don't care about errors
         try:
             os.close(self.fdin)
@@ -69,6 +69,17 @@ class Task:
         self.reader = ReaderThread(self.connection.fd, logfile)
         self.reader.start()
 
+        self.connection.send('export PS1=\n')
+        self.connection.send('set +o emacs\n')
+        self.connection.send('echo\n')
+        self.connection.send('echo\n')
+        self.connection.send("echo -e '" + utils.GREEN +
+                             '---------------------------------------------'
+                             + utils.RESET + "'\n")
+        self.connection.send('echo\n')
+        self.connection.send("echo -n -e '" + utils.YELLOW +
+                             "COMMANDS START: " +
+                             utils.RESET + "'\n")
         self.connection.send('date\n')
 
         for l in env:
@@ -77,16 +88,31 @@ class Task:
         try:
             with open(action) as f:
                 for line in f:
+                    self.connection.send("echo -n -e '" + utils.GREEN +
+                                         "RUNNING: " + utils.RESET + "'\n")
+                    self.connection.send("echo '" +
+                                         line.replace('\n','')
+                                             .replace("'", "'\\''") + "'\n")
                     self.connection.send(line)
-        except Exception, e:
+        except BaseException, e:
             print "ERROR: task failed:    " + str(e)
             print "ERROR: action is:      " + action
             print "ERROR: description is: " + description
-            exit(1)
+            os._exit(1)
 
+        self.connection.send("echo -n -e '" + utils.YELLOW +
+                             "COMMANDS DONE: " +
+                             utils.RESET + "'\n")
         self.connection.send('date\n')
         self.connection.send('exit\n')
 
     def wait(self, timeout=-1):
-        (pid, ret) = os.waitpid(self.connection.pid, 0)
+        try:
+            (pid, ret) = os.waitpid(self.connection.pid, 0)
+        except KeyboardInterrupt, e:
+            print "ERROR: ctrl+c catched!" + str(e)
+            os._exit(1)
+        except BaseException, e:
+            print "ERROR: " + str(e)
+            os._exit(1)
         return ret
