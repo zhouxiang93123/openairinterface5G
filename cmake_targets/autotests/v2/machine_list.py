@@ -12,7 +12,7 @@ class MachineWaiterThread(threading.Thread):
                 ret = task.wait()
                 if ret != 0:
                     print "ERROR: task '" + task.description + "' failed " + \
-                          "on machine " + machine.name
+                          "on machine " + self.machine.name
                 task.postaction()
             self.machine.unbusy()
         except BaseException, e:
