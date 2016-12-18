@@ -206,14 +206,16 @@ for test in todo_tests:
 ##############################################################################
 
 class ExecutionThread(threading.Thread):
-    def __init__(self, id, machine):
+    def __init__(self, id, machine, test):
         threading.Thread.__init__(self)
         self.machine = machine
         self.id = id
+        self.test = test
 
     def run(self):
         id = self.id
         machine = self.machine
+        test = self.test
 
         # step 1: compile
 
@@ -243,16 +245,16 @@ class ExecutionThread(threading.Thread):
                       " scp -r " + oai_user + "@" + machine.name + ":" + \
                                    remote_files + " " + logdir + \
                       " || true"
-        task =Task("actions/execution_compile.bash",
-                   "compilation of test " + id + " on " + machine.name,
-                   machine.name,
-                   oai_user,
-                   oai_password,
-                   runenv,
-                   openair_dir + "/cmake_targets/autotests/log/"
-                      + id + "_compile."
-                      + machine.name,
-                   post_action=post_action)
+        task = Task("actions/execution_compile.bash",
+                    "compilation of test " + id + " on " + machine.name,
+                    machine.name,
+                    oai_user,
+                    oai_password,
+                    runenv,
+                    openair_dir + "/cmake_targets/autotests/log/"
+                       + id + "_compile."
+                       + machine.name,
+                    post_action=post_action)
         ret = task.wait()
         task.postaction()
         if ret != 0:
@@ -299,7 +301,7 @@ for test in todo_tests:
         continue
     id = test.get('id')
     machine = machine_list.get_free_machine()
-    ExecutionThread(id, machine).start()
+    ExecutionThread(id, machine, test).start()
 
 #wait for compilation/execution tests to be finished
 print "INFO: all tests have been launched, waiting for completion"
