@@ -5,6 +5,11 @@ import xml.etree.ElementTree as ET
 from utils import test_in_list, quickshell
 from task import Task
 
+for i in range(10):
+  print i
+  time.sleep(10)
+exit
+
 #let's redefine 'stdout' to call flush after each write
 #(looks better in gitlab live logging)
 class Redefine_stdout(object):
