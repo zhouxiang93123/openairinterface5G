@@ -57,13 +57,14 @@ class ReaderThread(threading.Thread):
 
 class Task:
     def __init__(self, action, description, machine, user, password, env,
-                 logfile):
+                 logfile, post_action = None):
         self.action      = action
         self.description = description
         self.machine     = machine
         self.user        = user
         self.password    = password
         self.env         = env
+        self.post_action = post_action
 
         self.connection = connection(description, machine, user, password)
         self.reader = ReaderThread(self.connection.fd, logfile)
@@ -94,6 +95,11 @@ class Task:
                                          line.replace('\n','')
                                              .replace("'", "'\\''") + "'\n")
                     self.connection.send(line)
+                    self.connection.send("if [ $? != 0 ]; then " +
+                                         "echo -e '" + utils.RED +
+                                         "TEST_SETUP_ERROR: " + utils.RESET +
+                                         "last command failed, exiting'; " +
+                                         "date; exit 1; fi\n")
         except BaseException, e:
             print "ERROR: task failed:    " + str(e)
             print "ERROR: action is:      " + action
@@ -104,6 +110,8 @@ class Task:
                              "COMMANDS DONE: " +
                              utils.RESET + "'\n")
         self.connection.send('date\n')
+        self.connection.send("echo -e '" + utils.GREEN +
+                             "TEST_SETUP_SUCCESS" + utils.RESET + "'\n")
         self.connection.send('exit\n')
 
     def wait(self, timeout=-1):
@@ -116,3 +124,12 @@ class Task:
             print "ERROR: " + str(e)
             os._exit(1)
         return ret
+
+    def postaction(self):
+        if self.post_action != None:
+            out = utils.quickshell(self.post_action)
+            if len(out):
+                print "INFO: task '" + self.description + \
+                      "' post_action '" + self.post_action + "' says: "
+                for l in out.splitlines():
+                    print "INFO:     " + l

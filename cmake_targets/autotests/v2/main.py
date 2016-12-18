@@ -1,18 +1,45 @@
 #!/usr/bin/python
 
-import os, re, sys, time
+import os, re, sys, time, threading
 import xml.etree.ElementTree as ET
+
 from utils import test_in_list, quickshell
 from task import Task
+from machine_list import MachineList
 
 #let's redefine 'stdout' to call flush after each write
 #(looks better in gitlab live logging)
+#and get the log in a file too
 class Redefine_stdout(object):
    def __init__(self, stream):
        self.stream = stream
-   def write(self, data):
+       self.start_of_line = True
+       openair_dir = os.environ.get('OPENAIR_DIR')
+       if openair_dir == None:
+           print "FATAL: no OPENAIR_DIR"
+           os._exit(1)
+       try:
+           self.logfile = open(openair_dir +
+                            "/cmake_targets/autotests/log/python.stdout", "w")
+       except BaseException, e:
+           print "FATAL:  cannot create log file"
+           print e
+           os._exit(1)
+   def put(self, data):
        self.stream.write(data)
+       self.logfile.write(data)
+   def write(self, data):
+       for c in data:
+           if self.start_of_line:
+               self.start_of_line = False
+               t = time.strftime("%H:%M:%S", time.localtime()) + ": "
+               self.stream.write(t)
+               self.logfile.write(t)
+           self.put(c)
+           if c == '\n':
+               self.start_of_line = True
        self.stream.flush()
+       self.logfile.flush()
    def __getattr__(self, attr):
        return getattr(self.stream, attr)
 sys.stdout = Redefine_stdout(sys.stdout)
@@ -109,9 +136,6 @@ print "INFO: test for commit " + commit_id
 repository_url = quickshell("git config remote.origin.url").replace('\n','')
 print "INFO: repository URL: " + repository_url
 
-#create log directory
-quickshell("mkdir -p " + openair_dir + "/cmake_targets/autotests/log")
-
 #prepare environment for tasks
 env = []
 env.append("REPOSITORY_URL=" + repository_url)
@@ -131,3 +155,150 @@ for machine in machines.split():
 for task in tasks:
     print "INFO: wait for task: " + task.description
     task.wait()
+
+##############################################################################
+# run compilation tests                                                      #
+##############################################################################
+
+machine_list = MachineList(generic_machines.split())
+
+for test in todo_tests:
+    action = test.findtext('class')
+    if action != 'compilation':
+        continue
+    id = test.get('id')
+    machine = machine_list.get_free_machine()
+    print "INFO: start " + action + " test " + id + " on machine " + \
+          machine.name
+    tasks = []
+    runenv = env
+    runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
+    runenv.append('BUILD_ARGUMENTS="'
+                    + test.findtext('compile_prog_args')
+                    + '"')
+    runenv.append('BUILD_OUTPUT="'
+                    + test.findtext('compile_prog_out')
+                          .replace('\n','')
+                    + '"')
+    logdir = openair_dir +"/cmake_targets/autotests/log/"+ id +"/compile_log"
+    remote_files = "'/tmp/oai_test_setup/oai/cmake_targets/log/*'"
+    post_action = "mkdir -p "+ logdir + \
+                  " && sshpass -p " + oai_password + " scp -r " + oai_user + \
+                  "@" + machine.name + ":" + remote_files + " " + logdir + \
+                  " || true"
+    tasks.append(Task("actions/" + action + ".bash",
+                      action + " of test " + id + " on " + machine.name,
+                      machine.name,
+                      oai_user,
+                      oai_password,
+                      runenv,
+                      openair_dir + "/cmake_targets/autotests/log/"
+                         + id + "."
+                         + machine.name,
+                      post_action=post_action))
+    machine.busy(tasks)
+
+##############################################################################
+# run execution tests                                                        #
+##############################################################################
+
+class ExecutionThread(threading.Thread):
+    def __init__(self, id, machine):
+        threading.Thread.__init__(self)
+        self.machine = machine
+        self.id = id
+
+    def run(self):
+        id = self.id
+        machine = self.machine
+
+        # step 1: compile
+
+        print "INFO: start compilation of test " + id + " on machine " + \
+              machine.name
+        tasks = []
+        runenv = env
+        runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
+        runenv.append('PRE_BUILD="'
+                        + test.findtext('pre_compile_prog')
+                        + '"')
+        runenv.append('BUILD_PROG="'
+                        + test.findtext('compile_prog')
+                        + '"')
+        runenv.append('BUILD_ARGUMENTS="'
+                        + test.findtext('compile_prog_args')
+                        + '"')
+        runenv.append('PRE_EXEC="'
+                        + test.findtext('pre_exec') + " "
+                        + test.findtext('pre_exec_args')
+                        + '"')
+        logdir = openair_dir +"/cmake_targets/autotests/log/"+ id + \
+                 "/compile_log"
+        remote_files = "'/tmp/oai_test_setup/oai/cmake_targets/log/*'"
+        post_action = "mkdir -p "+ logdir + \
+                      " && sshpass -p " + oai_password + \
+                      " scp -r " + oai_user + "@" + machine.name + ":" + \
+                                   remote_files + " " + logdir + \
+                      " || true"
+        task =Task("actions/execution_compile.bash",
+                   "compilation of test " + id + " on " + machine.name,
+                   machine.name,
+                   oai_user,
+                   oai_password,
+                   runenv,
+                   openair_dir + "/cmake_targets/autotests/log/"
+                      + id + "_compile."
+                      + machine.name,
+                   post_action=post_action)
+        ret = task.wait()
+        task.postaction()
+        if ret != 0:
+            print "ERROR: compilation of test " + id + " failed: " + str(ret)
+            machine.unbusy()
+            return
+
+        #step 2: run all tests
+
+        nruns = test.findtext('nruns')
+        args = test.findtext('main_exec_args')
+        i = 0
+        for arg in args.splitlines():
+            i = i+1
+            runenv2 = runenv
+            runenv2.append('OPENAIR_TARGET=/tmp/oai_test_setup/oai/targets')
+            runenv2.append('EXEC="'
+                             + test.findtext('main_exec')
+                             + '"')
+            runenv2.append('EXEC_ARGS="' + arg + '"')
+            for run in range(int(nruns)):
+                print "INFO: start execution of test " + id + " case " + \
+                      str(i) + " run " + str(run) + " on machine " + \
+                      machine.name
+                task =Task("actions/execution.bash",
+                           "execution of test " + id + " on " + machine.name,
+                           machine.name,
+                           oai_user,
+                           oai_password,
+                           runenv2,
+                           openair_dir + "/cmake_targets/autotests/log/"
+                              + id + "_case_" + str(i) + "_run_" + str(run)
+                              + "." + machine.name)
+                ret = task.wait()
+                if ret != 0:
+                    print "ERROR: execution of test " +id+ " failed: " + \
+                          str(ret)
+
+        machine.unbusy()
+
+for test in todo_tests:
+    action = test.findtext('class')
+    if action != 'execution':
+        continue
+    id = test.get('id')
+    machine = machine_list.get_free_machine()
+    ExecutionThread(id, machine).start()
+
+#wait for compilation/execution tests to be finished
+#machine_list.wait()
+
+#run lte softmodem tests

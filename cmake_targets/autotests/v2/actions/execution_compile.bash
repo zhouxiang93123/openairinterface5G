@@ -1,0 +1,3 @@
+bash -c "$PRE_BUILD"
+$BUILD_PROG $BUILD_ARGUMENTS
+bash -c "$PRE_EXEC"
