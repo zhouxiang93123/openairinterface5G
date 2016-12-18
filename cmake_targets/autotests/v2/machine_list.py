@@ -58,3 +58,20 @@ class MachineList():
             print "ERROR: machine_list: " + str(e)
             os._exit(1)
         return free_machine
+
+    def wait_all_free(self):
+        try:
+            self.cond.acquire()
+            while True:
+                all_free = True
+                for m in self.list:
+                    if m.free == False:
+                        all_free = False
+                        break
+                if all_free == True:
+                    break
+                self.cond.wait()
+            self.cond.release()
+        except BaseException, e:
+            print "ERROR: machine_list: " + str(e)
+            os._exit(1)

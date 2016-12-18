@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, re, sys, time, threading
+import os, re, sys, time, threading, thread
 import xml.etree.ElementTree as ET
 
 from utils import test_in_list, quickshell
@@ -14,6 +14,7 @@ class Redefine_stdout(object):
    def __init__(self, stream):
        self.stream = stream
        self.start_of_line = True
+       self.lock = thread.allocate_lock()
        openair_dir = os.environ.get('OPENAIR_DIR')
        if openair_dir == None:
            print "FATAL: no OPENAIR_DIR"
@@ -29,6 +30,7 @@ class Redefine_stdout(object):
        self.stream.write(data)
        self.logfile.write(data)
    def write(self, data):
+       self.lock.acquire()
        for c in data:
            if self.start_of_line:
                self.start_of_line = False
@@ -40,6 +42,7 @@ class Redefine_stdout(object):
                self.start_of_line = True
        self.stream.flush()
        self.logfile.flush()
+       self.lock.release()
    def __getattr__(self, attr):
        return getattr(self.stream, attr)
 sys.stdout = Redefine_stdout(sys.stdout)
@@ -299,6 +302,9 @@ for test in todo_tests:
     ExecutionThread(id, machine).start()
 
 #wait for compilation/execution tests to be finished
-#machine_list.wait()
+print "INFO: all tests have been launched, waiting for completion"
+machine_list.wait_all_free()
+
+print "BYEBYE!!"
 
 #run lte softmodem tests
