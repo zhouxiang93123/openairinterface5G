@@ -5,11 +5,6 @@ import xml.etree.ElementTree as ET
 from utils import test_in_list, quickshell
 from task import Task
 
-for i in range(10):
-  print i
-  time.sleep(10)
-exit
-
 #let's redefine 'stdout' to call flush after each write
 #(looks better in gitlab live logging)
 class Redefine_stdout(object):
@@ -21,6 +16,11 @@ class Redefine_stdout(object):
    def __getattr__(self, attr):
        return getattr(self.stream, attr)
 sys.stdout = Redefine_stdout(sys.stdout)
+
+for i in range(10):
+  print i
+  time.sleep(10)
+exit
 
 oai_user         = os.environ.get('OAI_USER')
 oai_password     = os.environ.get('OAI_PASS')
