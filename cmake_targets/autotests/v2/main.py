@@ -17,11 +17,6 @@ class Redefine_stdout(object):
        return getattr(self.stream, attr)
 sys.stdout = Redefine_stdout(sys.stdout)
 
-for i in range(10):
-  print i
-  time.sleep(1)
-os._exit(1)
-
 oai_user         = os.environ.get('OAI_USER')
 oai_password     = os.environ.get('OAI_PASS')
 requested_tests  = os.environ.get('OAI_TEST_CASE_GROUP')
