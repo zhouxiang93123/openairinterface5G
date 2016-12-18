@@ -19,7 +19,7 @@ sys.stdout = Redefine_stdout(sys.stdout)
 
 for i in range(10):
   print i
-  time.sleep(10)
+  time.sleep(1)
 os._exit(1)
 
 oai_user         = os.environ.get('OAI_USER')
