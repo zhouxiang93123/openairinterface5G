@@ -302,25 +302,70 @@ for test in todo_tests:
     task_hss.waitlog('S6AS_SIM-> ')
 
     #then launch EPC, wait for connection on HSS side
-    task_epc = Task("actions/alu_epc.bash",
-                    "ALU EPC",
-                    epc_machine,
-                    oai_user,
-                    oai_password,
-                    env,
-                    logdir + "/alu_epc." + epc_machine)
-    task_epc.wait()
+    task = Task("actions/alu_epc.bash",
+                "ALU EPC",
+                epc_machine,
+                oai_user,
+                oai_password,
+                env,
+                logdir + "/alu_epc." + epc_machine)
+    ret = task.wait()
+    if ret != 0:
+        log("ERROR: EPC start failure");
+        os._exit(1)
     task_hss.waitlog('Connected\n')
 
-    #stop EPC, wait for disconnection on HSS side
-    task_epc = Task("actions/alu_epc_stop.bash",
-                    "ALU EPC stop",
-                    epc_machine,
+    #compile softmodem
+    envcomp = list(env)
+    envcomp.append('BUILD_ARGUMENTS="' +
+                   test.findtext('eNB_compile_prog_args') + '"')
+    #we don't care about BUILD_OUTPUT but it's required (TODO: change that)
+    envcomp.append('BUILD_OUTPUT=/')
+    task = Task("actions/compilation.bash",
+                "compile softmodem",
+                enb_machine,
+                oai_user,
+                oai_password,
+                envcomp,
+                logdir + "/compile_softmodem." + enb_machine)
+    ret = task.wait()
+    if ret != 0:
+        log("ERROR: softmodem compilation failure");
+        os._exit(1)
+
+    #copy wanted configuration file
+    quickshell("sshpass -p " + oai_password +
+               " scp config/enb.band7.tm1.usrpb210.conf " +
+                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
+
+    #run softmodem
+    task_enb = Task("actions/run_enb.bash",
+                    "run softmodem",
+                    enb_machine,
                     oai_user,
                     oai_password,
                     env,
-                    logdir + "/alu_epc_stop." + epc_machine)
-    task_epc.wait()
+                    logdir + "/run_softmodem." + enb_machine)
+    task_enb.waitlog('got sync')
+    print "got sync!"
+    time.sleep(2)
+
+    #start UE
+
+    #run traffic
+
+    #stop softmodem
+    task_enb.sendnow("%c" % 3)
+
+    #stop EPC, wait for disconnection on HSS side
+    task = Task("actions/alu_epc_stop.bash",
+                "ALU EPC stop",
+                epc_machine,
+                oai_user,
+                oai_password,
+                env,
+                logdir + "/alu_epc_stop." + epc_machine)
+    task.wait()
     task_hss.waitlog('Disconnected\n')
 
     task_hss.sendnow("exit\n")
