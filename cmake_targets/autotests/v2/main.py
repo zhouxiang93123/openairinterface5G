@@ -134,7 +134,7 @@ for test in todo_tests:
     log("INFO: start " + action + " test " + id + " on machine " +
         machine.name)
     tasks = []
-    runenv = env
+    runenv = list(env)
     runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
     runenv.append('BUILD_ARGUMENTS="'
                     + test.findtext('compile_prog_args')
@@ -182,7 +182,7 @@ class ExecutionThread(threading.Thread):
         log("INFO: start compilation of test " + id + " on machine " +
             machine.name)
         tasks = []
-        runenv = env
+        runenv = list(env)
         runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
         runenv.append('PRE_BUILD="'
                         + test.findtext('pre_compile_prog')
@@ -229,7 +229,7 @@ class ExecutionThread(threading.Thread):
         i = 0
         for arg in args.splitlines():
             i = i+1
-            runenv2 = runenv
+            runenv2 = list(runenv)
             runenv2.append('OPENAIR_TARGET=/tmp/oai_test_setup/oai/targets')
             runenv2.append('EXEC="'
                              + test.findtext('main_exec')
