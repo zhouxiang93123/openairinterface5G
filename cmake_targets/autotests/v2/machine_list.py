@@ -1,5 +1,7 @@
 import threading, os
 
+from utils import log
+
 class MachineWaiterThread(threading.Thread):
     def __init__(self, machine, tasks):
         threading.Thread.__init__(self)
@@ -11,12 +13,12 @@ class MachineWaiterThread(threading.Thread):
             for task in self.tasks:
                 ret = task.wait()
                 if ret != 0:
-                    print "ERROR: task '" + task.description + "' failed " + \
-                          "on machine " + self.machine.name
+                    log("ERROR: task '" + task.description + "' failed " +
+                        "on machine " + self.machine.name)
                 task.postaction()
             self.machine.unbusy()
         except BaseException, e:
-            print "ERROR: MachineWaiterThread: " + str(e)
+            log("ERROR: MachineWaiterThread: " + str(e))
             os._exit(1)
 
 class Machine():
@@ -55,7 +57,7 @@ class MachineList():
             free_machine.free = False
             self.cond.release()
         except BaseException, e:
-            print "ERROR: machine_list: " + str(e)
+            log("ERROR: machine_list: " + str(e))
             os._exit(1)
         return free_machine
 
@@ -73,5 +75,5 @@ class MachineList():
                 self.cond.wait()
             self.cond.release()
         except BaseException, e:
-            print "ERROR: machine_list: " + str(e)
+            log("ERROR: machine_list: " + str(e))
             os._exit(1)

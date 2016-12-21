@@ -3,49 +3,9 @@
 import os, re, sys, time, threading, thread
 import xml.etree.ElementTree as ET
 
-from utils import test_in_list, quickshell
+from utils import test_in_list, quickshell, log
 from task import Task
 from machine_list import MachineList
-
-#let's redefine 'stdout' to call flush after each write
-#(looks better in gitlab live logging)
-#and get the log in a file too
-class Redefine_stdout(object):
-   def __init__(self, stream):
-       self.stream = stream
-       self.start_of_line = True
-       self.lock = thread.allocate_lock()
-       openair_dir = os.environ.get('OPENAIR_DIR')
-       if openair_dir == None:
-           print "FATAL: no OPENAIR_DIR"
-           os._exit(1)
-       try:
-           self.logfile = open(openair_dir +
-                            "/cmake_targets/autotests/log/python.stdout", "w")
-       except BaseException, e:
-           print "FATAL:  cannot create log file"
-           print e
-           os._exit(1)
-   def put(self, data):
-       self.stream.write(data)
-       self.logfile.write(data)
-   def write(self, data):
-       self.lock.acquire()
-       for c in data:
-           if self.start_of_line:
-               self.start_of_line = False
-               t = time.strftime("%H:%M:%S", time.localtime()) + ": "
-               self.stream.write(t)
-               self.logfile.write(t)
-           self.put(c)
-           if c == '\n':
-               self.start_of_line = True
-       self.stream.flush()
-       self.logfile.flush()
-       self.lock.release()
-   def __getattr__(self, attr):
-       return getattr(self.stream, attr)
-sys.stdout = Redefine_stdout(sys.stdout)
 
 oai_user         = os.environ.get('OAI_USER')
 oai_password     = os.environ.get('OAI_PASS')
@@ -58,28 +18,28 @@ openair_dir      = os.environ.get('OPENAIR_DIR')
 
 some_undef = False
 if (oai_user         == None) :
-        print "variable OAI_USER is not defined"
+        log("variable OAI_USER is not defined")
         some_undef = True
 if (oai_password     == None) :
-        print "variable OAI_PASS is not defined"
+        log("variable OAI_PASS is not defined")
         some_undef = True
 if (requested_tests  == None) :
-        print "variable OAI_TEST_CASE_GROUP is not defined"
+        log("variable OAI_TEST_CASE_GROUP is not defined")
         some_undef = True
 if (machines         == None) :
-        print "variable MACHINELIST is not defined"
+        log("variable MACHINELIST is not defined")
         some_undef = True
 if (generic_machines == None) :
-        print "variable MACHINELISTGENERIC is not defined"
+        log("variable MACHINELISTGENERIC is not defined")
         some_undef = True
 if (result_dir       == None) :
-        print "variable RESULT_DIR is not defined"
+        log("variable RESULT_DIR is not defined")
         some_undef = True
 if (nruns_softmodem  == None) :
-        print "variable NRUNS_LTE_SOFTMODEM is not defined"
+        log("variable NRUNS_LTE_SOFTMODEM is not defined")
         some_undef = True
 if (openair_dir      == None) :
-        print "variable OPENAIR_DIR is not defined"
+        log("variable OPENAIR_DIR is not defined")
         some_undef = True
 if (some_undef == True):
     os._exit(1)
@@ -105,7 +65,7 @@ requested_tests=requested_tests.split()
 for test in exclusion_tests:
     if     (not re.match('^[0-9]{6}$', test) and
             not re.match('^[0-9]{1,5}\+$', test)):
-        print "ERROR: exclusion test is invalidly formatted: " + test
+        log("ERROR: exclusion test is invalidly formatted: " + test)
         os._exit(1)
 
 #check that requested tests are well formatted
@@ -114,9 +74,9 @@ for test in exclusion_tests:
 for test in requested_tests:
     if     (re.match('^[0-9]{6}$', test) or
             re.match('^[0-9]{1,5}\+$', test)):
-        print "INFO: test group/case requested: " + test
+        log("INFO: test group/case requested: " + test)
     else:
-        print "ERROR: requested test is invalidly formatted: " + test
+        log("ERROR: requested test is invalidly formatted: " + test)
         os._exit(1)
 
 #get the list of tests to be done
@@ -124,20 +84,20 @@ todo_tests=[]
 for test in all_tests:
     if     (test_in_list(test.get('id'), requested_tests) and
             not test_in_list(test.get('id'), exclusion_tests)):
-        print "INFO: test will be run: " + test.get('id')
+        log("INFO: test will be run: " + test.get('id'))
         todo_tests.append(test)
     else:
-        print "INFO: test will be skipped: " + test.get('id')
+        log("INFO: test will be skipped: " + test.get('id'))
 
 #get commit ID to use
 commit_id = quickshell("git rev-parse --verify HEAD").replace('\n','')
 if (len(commit_id) != 20*2):
-    print "ERROR: bad commit '" + commit_id + "'"
-print "INFO: test for commit " + commit_id
+    log("ERROR: bad commit '" + commit_id + "'")
+log("INFO: test for commit " + commit_id)
 
 #get repository URL
 repository_url = quickshell("git config remote.origin.url").replace('\n','')
-print "INFO: repository URL: " + repository_url
+log("INFO: repository URL: " + repository_url)
 
 #prepare environment for tasks
 env = []
@@ -156,7 +116,7 @@ for machine in machines.split():
                       openair_dir + "/cmake_targets/autotests/log/clone." \
                          + machine))
 for task in tasks:
-    print "INFO: wait for task: " + task.description
+    log("INFO: wait for task: " + task.description)
     task.wait()
 
 ##############################################################################
@@ -171,8 +131,8 @@ for test in todo_tests:
         continue
     id = test.get('id')
     machine = machine_list.get_free_machine()
-    print "INFO: start " + action + " test " + id + " on machine " + \
-          machine.name
+    log("INFO: start " + action + " test " + id + " on machine " +
+        machine.name)
     tasks = []
     runenv = env
     runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
@@ -219,8 +179,8 @@ class ExecutionThread(threading.Thread):
 
         # step 1: compile
 
-        print "INFO: start compilation of test " + id + " on machine " + \
-              machine.name
+        log("INFO: start compilation of test " + id + " on machine " +
+            machine.name)
         tasks = []
         runenv = env
         runenv.append('OPENAIR_DIR=/tmp/oai_test_setup/oai')
@@ -258,7 +218,7 @@ class ExecutionThread(threading.Thread):
         ret = task.wait()
         task.postaction()
         if ret != 0:
-            print "ERROR: compilation of test " + id + " failed: " + str(ret)
+            log("ERROR: compilation of test " + id + " failed: " + str(ret))
             machine.unbusy()
             return
 
@@ -276,9 +236,9 @@ class ExecutionThread(threading.Thread):
                              + '"')
             runenv2.append('EXEC_ARGS="' + arg + '"')
             for run in range(int(nruns)):
-                print "INFO: start execution of test " + id + " case " + \
-                      str(i) + " run " + str(run) + " on machine " + \
-                      machine.name
+                log("INFO: start execution of test " + id + " case " +
+                    str(i) + " run " + str(run) + " on machine " +
+                    machine.name)
                 task =Task("actions/execution.bash",
                            "execution of test " + id + " on " + machine.name,
                            machine.name,
@@ -290,8 +250,8 @@ class ExecutionThread(threading.Thread):
                               + "." + machine.name)
                 ret = task.wait()
                 if ret != 0:
-                    print "ERROR: execution of test " +id+ " failed: " + \
-                          str(ret)
+                    log("ERROR: execution of test " +id+ " failed: " +
+                        str(ret))
 
         machine.unbusy()
 
@@ -304,9 +264,69 @@ for test in todo_tests:
     ExecutionThread(id, machine, test).start()
 
 #wait for compilation/execution tests to be finished
-print "INFO: all tests have been launched, waiting for completion"
+#log only if some compilation/execution tests are actually done
+for test in todo_tests:
+    action = test.findtext('class')
+    if action == 'execution' or action == 'compilation':
+        log("INFO: requested compilation/execution tests " +
+            "have been launched, waiting for completion")
+        break
 machine_list.wait_all_free()
 
-print "BYEBYE!!"
+##############################################################################
+# run ALU softmodem tests                                                    #
+##############################################################################
+
+for test in todo_tests:
+    action = test.findtext('class')
+    if action != 'lte-softmodem':
+        continue
+    if not "start_ltebox" in test.findtext('EPC_main_exec'):
+        continue
+    id = test.get('id')
+    log("Running ALU test " + test.get('id'))
+    logdir = openair_dir + "/cmake_targets/autotests/log/" + id
+    quickshell("mkdir -p " + logdir)
+    epc_machine = test.findtext('EPC')
+    enb_machine = test.findtext('eNB')
+    ue_machine = test.findtext('UE')
+
+    #launch HSS, wait for prompt
+    task_hss = Task("actions/alu_hss.bash",
+                    "ALU HSS",
+                    epc_machine,
+                    oai_user,
+                    oai_password,
+                    env,
+                    logdir + "/alu_hss." + epc_machine)
+    task_hss.waitlog('S6AS_SIM-> ')
+
+    #then launch EPC, wait for connection on HSS side
+    task_epc = Task("actions/alu_epc.bash",
+                    "ALU EPC",
+                    epc_machine,
+                    oai_user,
+                    oai_password,
+                    env,
+                    logdir + "/alu_epc." + epc_machine)
+    task_epc.wait()
+    task_hss.waitlog('Connected\n')
+
+    #stop EPC, wait for disconnection on HSS side
+    task_epc = Task("actions/alu_epc_stop.bash",
+                    "ALU EPC stop",
+                    epc_machine,
+                    oai_user,
+                    oai_password,
+                    env,
+                    logdir + "/alu_epc_stop." + epc_machine)
+    task_epc.wait()
+    task_hss.waitlog('Disconnected\n')
+
+    task_hss.sendnow("exit\n")
+    task_hss.wait()
+
+import utils
+log(utils.GREEN + "GOODBYE" + utils.RESET)
 
 #run lte softmodem tests
