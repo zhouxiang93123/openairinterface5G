@@ -354,17 +354,17 @@ for test in todo_tests:
     #start UE
     task = Task("actions/start_bandrich.bash",
                 "start bandrich UE",
-                enb_machine,
+                ue_machine,
                 oai_user,
                 oai_password,
                 env,
-                logdir + "/start_bandrich." + enb_machine)
+                logdir + "/start_bandrich." + ue_machine)
     task.wait()
 
     #run traffic
 
     #stop softmodem
-    #task_enb.sendnow("%c" % 3)
+    task_enb.sendnow("%c" % 3)
 
     #stop EPC, wait for disconnection on HSS side
     task = Task("actions/alu_epc_stop.bash",
@@ -382,5 +382,6 @@ for test in todo_tests:
 
 import utils
 log(utils.GREEN + "GOODBYE" + utils.RESET)
+os._exit(0)
 
 #run lte softmodem tests
