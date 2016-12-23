@@ -376,7 +376,8 @@ for test in todo_tests:
     ret = task_ue.wait()
     if ret != 0:
         log("ERROR: " + id + ": task bandrich UE failed")
-        os._exit(1)
+        #not sure if we have to quit here or not
+        #os._exit(1)
 
     #stop softmodem
     log("INFO: " + id + ": stop softmodem")
@@ -384,7 +385,8 @@ for test in todo_tests:
     ret = task_enb.wait()
     if ret != 0:
         log("ERROR: " + id + ": softmodem failed")
-        os._exit(1)
+        #not sure if we have to quit here or not
+        #os._exit(1)
 
     #stop EPC, wait for disconnection on HSS side
     log("INFO: " + id + ": stop EPC")

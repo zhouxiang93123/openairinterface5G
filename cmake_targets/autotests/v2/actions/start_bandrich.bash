@@ -8,4 +8,4 @@ python start_bandrich.py
 
 sudo wvdial -C wvdial.bandrich.conf || true
 
-echo -ne "AT+CFUN=4\r" > /dev/bandrich
+python stop_bandrich.py
