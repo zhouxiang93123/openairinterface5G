@@ -1,3 +1,5 @@
+import time
+
 from modem import quit, Modem
 
 try:

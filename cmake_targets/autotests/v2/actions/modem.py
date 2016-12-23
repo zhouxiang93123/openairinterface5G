@@ -1,3 +1,5 @@
+import sys, os, select, re, time
+
 def quit(r):
     sys.stdout.flush()
     os._exit(r)
