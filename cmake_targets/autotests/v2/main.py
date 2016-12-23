@@ -366,9 +366,42 @@ for test in todo_tests:
                    logdir + "/start_bandrich." + ue_machine)
     task_ue.waitlog("local  IP address")
 
+    #get bandrich UE IP
+    l = open(task_ue.logfile, "r").read()
+    ue_ip = re.search("local  IP address (.*)\n", a).groups()[0]
+    log("INFO: " + id + ": bandrich UE IP address: " + ue_ip)
+
     #run traffic
-    log("INFO: " + id + ": run traffic")
-    time.sleep(10)
+    log("INFO: " + id + ": run downlink TCP traffic")
+
+    log("INFO: " + id + ":     launch server")
+    task_traffic_ue = Task("actions/downlink_bandrich.bash",
+                           "start iperf on bandrich UE as server",
+                           ue_machine,
+                           oai_user,
+                           oai_password,
+                           env,
+                           logdir + "/downlink_bandrich." + ue_machine)
+    task_ue.waitlog("Server listening on TCP port 5001")
+
+    log("INFO: " + id + ":     launch client")
+    envepc = list(env)
+    envepc.append("UE_IP=" + ue_ip)
+    task = Task("actions/downlink_epc.bash",
+                "start iperf on EPC as client",
+                epc_machine,
+                oai_user,
+                oai_password,
+                envepc,
+                logdir + "/downlink_epc." + ue_machine)
+    ret = task.wait()
+    if ret != 0:
+        log("ERROR: " + id + ": downlink traffic failed")
+        #not sure if we have to quit here or not
+        #os._exit(1)
+
+    task_ue.sendnow("%c%c" % (3, 3))
+    task_ue.wait()
 
     #stop UE
     log("INFO: " + id + ": stop bandrich UE")
