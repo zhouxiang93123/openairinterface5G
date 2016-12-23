@@ -373,12 +373,18 @@ for test in todo_tests:
     #stop UE
     log("INFO: " + id + ": stop bandrich UE")
     task_ue.sendnow("%c" % 3)
-    task_ue.wait()
+    ret = task_ue.wait()
+    if ret != 0:
+        log("ERROR: " + id + ": task bandrich UE failed")
+        os._exit(1)
 
     #stop softmodem
     log("INFO: " + id + ": stop softmodem")
     task_enb.sendnow("%c" % 3)
-    task_enb.wait()
+    ret = task_enb.wait()
+    if ret != 0:
+        log("ERROR: " + id + ": softmodem failed")
+        os._exit(1)
 
     #stop EPC, wait for disconnection on HSS side
     log("INFO: " + id + ": stop EPC")
@@ -389,12 +395,18 @@ for test in todo_tests:
                 oai_password,
                 env,
                 logdir + "/alu_epc_stop." + epc_machine)
-    task.wait()
+    ret = task.wait()
+    if ret != 0:
+        log("ERROR: " + id + ": ALU EPC stop failed")
+        os._exit(1)
     task_hss.waitlog('Disconnected\n')
 
     log("INFO: " + id + ": stop HSS")
     task_hss.sendnow("exit\n")
-    task_hss.wait()
+    ret = task_hss.wait()
+    if ret != 0:
+        log("ERROR: " + id + ": ALU HSS failed")
+        os._exit(1)
 
 import utils
 log(utils.GREEN + "GOODBYE" + utils.RESET)

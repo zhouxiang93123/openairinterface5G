@@ -6,6 +6,6 @@ source oaienv
 cd cmake_targets/autotests/v2/actions
 python start_bandrich.py
 
-sudo wvdial -C wvdial.bandrich.conf
+sudo wvdial -C wvdial.bandrich.conf || true
 
 echo -ne "AT+CFUN=4\r" > /dev/bandrich
