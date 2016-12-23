@@ -382,7 +382,7 @@ for test in todo_tests:
                            oai_password,
                            env,
                            logdir + "/downlink_bandrich." + ue_machine)
-    task_ue.waitlog("Server listening on TCP port 5001")
+    task_traffic_ue.waitlog("Server listening on TCP port 5001")
 
     log("INFO: " + id + ":     launch client")
     envepc = list(env)
@@ -394,14 +394,17 @@ for test in todo_tests:
                 oai_password,
                 envepc,
                 logdir + "/downlink_epc." + ue_machine)
+    log("INFO: " + id + ":     wait for client")
     ret = task.wait()
     if ret != 0:
         log("ERROR: " + id + ": downlink traffic failed")
         #not sure if we have to quit here or not
         #os._exit(1)
 
-    task_ue.sendnow("%c%c" % (3, 3))
-    task_ue.wait()
+    #stop downlink server
+    log("INFO: " + id + ":     stop server")
+    task_traffic_ue.sendnow("%c%c" % (3, 3))
+    task_traffic_ue.wait()
 
     #stop UE
     log("INFO: " + id + ": stop bandrich UE")
