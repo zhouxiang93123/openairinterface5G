@@ -368,7 +368,7 @@ for test in todo_tests:
 
     #get bandrich UE IP
     l = open(task_ue.logfile, "r").read()
-    ue_ip = re.search("local  IP address (.*)\n", a).groups()[0]
+    ue_ip = re.search("local  IP address (.*)\n", l).groups()[0]
     log("INFO: " + id + ": bandrich UE IP address: " + ue_ip)
 
     #run traffic
