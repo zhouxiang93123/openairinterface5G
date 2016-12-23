@@ -1,2 +1,2 @@
 echo $UE_IP
-iperf -c $UE_IP -i1
+timeout -s 9 20s iperf -c $UE_IP -i1
