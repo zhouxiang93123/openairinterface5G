@@ -393,7 +393,7 @@ for test in todo_tests:
                 oai_user,
                 oai_password,
                 envepc,
-                logdir + "/downlink_epc." + ue_machine)
+                logdir + "/downlink_epc." + epc_machine)
     log("INFO: " + id + ":     wait for client")
     ret = task.wait()
     if ret != 0:
