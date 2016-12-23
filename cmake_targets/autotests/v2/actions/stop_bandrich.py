@@ -13,7 +13,7 @@ try:
         print "ERROR: no modem?"
         quit(1)
     if "NO CARRIER" in r.data:
-        print "WARNING: NO CARRIER detected, not sure if handled correctly"
+        print "WARNING: 'NO CARRIER' detected, not sure if handled correctly"
 
     #deactivate the modem
     print "INFO: reset and activate the modem"
