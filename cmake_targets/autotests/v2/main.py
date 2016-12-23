@@ -117,7 +117,10 @@ for machine in machines.split():
                          + machine))
 for task in tasks:
     log("INFO: wait for task: " + task.description)
-    task.wait()
+    ret = task.wait()
+    if ret != 0 or not "TEST_SETUP_SUCCESS" in open(task.logfile).read():
+        log("ERROR: task failed: " + task.description)
+        os._exit(1)
 
 ##############################################################################
 # run compilation tests                                                      #
