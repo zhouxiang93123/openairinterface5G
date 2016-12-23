@@ -8,9 +8,12 @@ try:
     #test that modem is there
     print "INFO: check modem's presence"
     modem.send('AT')
-    if modem.wait().ret != True:
+    r = modem.wait()
+    if r.ret != True and "NO CARRIER" not in r.data:
         print "ERROR: no modem?"
         quit(1)
+    if "NO CARRIER" in r.data:
+        print "WARNING: NO CARRIER detected, not sure if handled correctly"
 
     #deactivate the modem
     print "INFO: reset and activate the modem"

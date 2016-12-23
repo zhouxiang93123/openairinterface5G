@@ -36,9 +36,10 @@ class Modem:
         return os.read(self.i, 65536)
 
     def wait(self):
-        ok        = '\r\nOK\r\n'
-        error     = '\r\nERROR\r\n'
-        cme_error = '\r\nCME ERROR:[^\r]*\r\n'
+        ok         = '\r\nOK\r\n'
+        error      = '\r\nERROR\r\n'
+        cme_error  = '\r\nCME ERROR:[^\r]*\r\n'
+        no_carrier = '\r\nNO CARRIER\r\n'
         l = ''
         while True:
             l = l + self.recv()
@@ -61,8 +62,9 @@ class Modem:
                   last_res.replace('\r','\\r').replace('\n','\\n')+"'"
             if re.match(ok, last_res) != None:
                 return ModemResponse(True, l)
-            if (   re.match(error,     last_res) != None or
-                   re.match(cme_error, last_res) != None):
+            if (   re.match(error,      last_res) != None or
+                   re.match(cme_error,  last_res) != None or
+                   re.match(no_carrier, last_res) != None):
                 return ModemResponse(False, l)
         #TODO purge?
         #re.purge()
