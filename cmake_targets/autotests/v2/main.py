@@ -351,9 +351,15 @@ for test in todo_tests:
                     logdir + "/run_softmodem." + enb_machine)
     task_enb.waitlog('got sync')
 
-    task_enb.wait()
-
     #start UE
+    task = Task("actions/start_bandrich.bash",
+                "start bandrich UE",
+                enb_machine,
+                oai_user,
+                oai_password,
+                env,
+                logdir + "/start_bandrich." + enb_machine)
+    task.wait()
 
     #run traffic
 
