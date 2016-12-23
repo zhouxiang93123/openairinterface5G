@@ -287,7 +287,7 @@ for test in todo_tests:
     if not "start_ltebox" in test.findtext('EPC_main_exec'):
         continue
     id = test.get('id')
-    log("Running ALU test " + test.get('id'))
+    log("INFO: Running ALU test " + id)
     logdir = openair_dir + "/cmake_targets/autotests/log/" + id
     quickshell("mkdir -p " + logdir)
     epc_machine = test.findtext('EPC')
@@ -295,6 +295,7 @@ for test in todo_tests:
     ue_machine = test.findtext('UE')
 
     #launch HSS, wait for prompt
+    log("INFO: " + id + ": run HSS")
     task_hss = Task("actions/alu_hss.bash",
                     "ALU HSS",
                     epc_machine,
@@ -305,6 +306,7 @@ for test in todo_tests:
     task_hss.waitlog('S6AS_SIM-> ')
 
     #then launch EPC, wait for connection on HSS side
+    log("INFO: " + id + ": run EPC")
     task = Task("actions/alu_epc.bash",
                 "ALU EPC",
                 epc_machine,
@@ -319,6 +321,7 @@ for test in todo_tests:
     task_hss.waitlog('Connected\n')
 
     #compile softmodem
+    log("INFO: " + id + ": compile softmodem")
     envcomp = list(env)
     envcomp.append('BUILD_ARGUMENTS="' +
                    test.findtext('eNB_compile_prog_args') + '"')
@@ -342,6 +345,7 @@ for test in todo_tests:
 #                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
 
     #run softmodem
+    log("INFO: " + id + ": run softmodem")
     task_enb = Task("actions/run_enb.bash",
                     "run softmodem",
                     enb_machine,
@@ -352,21 +356,32 @@ for test in todo_tests:
     task_enb.waitlog('got sync')
 
     #start UE
-    task = Task("actions/start_bandrich.bash",
-                "start bandrich UE",
-                ue_machine,
-                oai_user,
-                oai_password,
-                env,
-                logdir + "/start_bandrich." + ue_machine)
-    task.wait()
+    log("INFO: " + id + ": start bandrich UE")
+    task_ue = Task("actions/start_bandrich.bash",
+                   "start bandrich UE",
+                   ue_machine,
+                   oai_user,
+                   oai_password,
+                   env,
+                   logdir + "/start_bandrich." + ue_machine)
+    task_ue.waitlog("local  IP address")
 
     #run traffic
+    log("INFO: " + id + ": run traffic")
+    time.sleep(10)
+
+    #stop UE
+    log("INFO: " + id + ": stop bandrich UE")
+    task_ue.sendnow("%c" % 3)
+    task_ue.wait()
 
     #stop softmodem
+    log("INFO: " + id + ": stop softmodem")
     task_enb.sendnow("%c" % 3)
+    task_enb.wait()
 
     #stop EPC, wait for disconnection on HSS side
+    log("INFO: " + id + ": stop EPC")
     task = Task("actions/alu_epc_stop.bash",
                 "ALU EPC stop",
                 epc_machine,
@@ -377,11 +392,12 @@ for test in todo_tests:
     task.wait()
     task_hss.waitlog('Disconnected\n')
 
+    log("INFO: " + id + ": stop HSS")
     task_hss.sendnow("exit\n")
     task_hss.wait()
 
 import utils
 log(utils.GREEN + "GOODBYE" + utils.RESET)
-os._exit(0)
+#os._exit(0)
 
 #run lte softmodem tests

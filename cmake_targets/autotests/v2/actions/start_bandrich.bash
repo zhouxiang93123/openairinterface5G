@@ -5,4 +5,7 @@ cd /tmp/oai_test_setup/oai
 source oaienv
 cd cmake_targets/autotests/v2/actions
 python start_bandrich.py
+
 sudo wvdial -C wvdial.bandrich.conf
+
+echo -ne "AT+CFUN=4\r" > /dev/bandrich
