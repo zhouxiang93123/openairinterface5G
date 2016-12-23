@@ -333,10 +333,10 @@ for test in todo_tests:
         log("ERROR: softmodem compilation failure");
         os._exit(1)
 
-    #copy wanted configuration file
-    quickshell("sshpass -p " + oai_password +
-               " scp config/enb.band7.tm1.usrpb210.conf " +
-                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
+#    #copy wanted configuration file
+#    quickshell("sshpass -p " + oai_password +
+#               " scp config/enb.band7.tm1.usrpb210.conf " +
+#                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
 
     #run softmodem
     task_enb = Task("actions/run_enb.bash",
@@ -347,15 +347,15 @@ for test in todo_tests:
                     env,
                     logdir + "/run_softmodem." + enb_machine)
     task_enb.waitlog('got sync')
-    print "got sync!"
-    time.sleep(2)
+
+    task_enb.wait()
 
     #start UE
 
     #run traffic
 
     #stop softmodem
-    task_enb.sendnow("%c" % 3)
+    #task_enb.sendnow("%c" % 3)
 
     #stop EPC, wait for disconnection on HSS side
     task = Task("actions/alu_epc_stop.bash",
