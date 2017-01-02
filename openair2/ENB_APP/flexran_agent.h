@@ -29,13 +29,23 @@
 #ifndef FLEXRAN_AGENT_H_
 #define FLEXRAN_AGENT_H_
 
-#include "enb_config.h" // for enb properties
 #include "flexran_agent_common.h"
+#include "flexran_agent_async.h"
+#include "flexran_agent_extern.h"
+#include "flexran_agent_timer.h"
+#include "flexran_agent_defs.h"
 
+#include "log.h"
+#include "assertions.h"
+
+#include "enb_config.h" // for enb properties
+
+
+int flexran_agent_register_control_module (mid_t, agent_id_t);
 
 /* Initiation and termination of the eNodeB agent */
-int flexran_agent_start(mid_t mod_id, const Enb_properties_array_t* enb_properties);
-int flexran_agent_stop(mid_t mod_id);
+int flexran_agent_start(mid_t , const Enb_properties_array_t*);
+int flexran_agent_stop( mid_t );
 
 /* 
  * enb agent task mainly wakes up the tx thread for periodic and oneshot messages to the controller 

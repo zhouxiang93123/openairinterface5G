@@ -906,6 +906,8 @@ if (FLEXRAN_AGENT_SB_IF)
     ${OPENAIR2_DIR}/ENB_APP/flexran_agent_handler.c
     ${OPENAIR2_DIR}/ENB_APP/flexran_agent_common.c
     ${OPENAIR2_DIR}/ENB_APP/flexran_agent_common_internal.c
+    ${OPENAIR2_DIR}/ENB_APP/flexran_agent_ran_api.c
+    ${OPENAIR2_DIR}/ENB_APP/flexran_agent_timer.c
     ${OPENAIR2_DIR}/ENB_APP/CONTROL_MODULES/MAC/flexran_agent_mac.c
     ${OPENAIR2_DIR}/ENB_APP/flexran_agent.c
     ${OPENAIR2_DIR}/ENB_APP/flexran_agent_task_manager.c

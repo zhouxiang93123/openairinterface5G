@@ -26,7 +26,8 @@
  * \version 0.1
  */
 
-
+#include "flexran_agent_timer.h"
+#include "flexran_agent_defs.h"
 #include "flexran_agent_common.h"
 #include "flexran_agent_mac.h"
 #include "log.h"

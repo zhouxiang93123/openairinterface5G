@@ -30,7 +30,7 @@
 #ifndef __FLEXRAN_AGENT_EXTERN_H__
 #define __FLEXRAN_AGENT_EXTERN_H__
 
-#include "flexran_agent_defs.h"
+//#include "flexran_agent_defs.h"
 #include "flexran_agent_mac_defs.h"
 
 
