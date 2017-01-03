@@ -35,6 +35,8 @@
 //struct flexran_agent_map agent_map;
 flexran_agent_timer_instance_t timer_instance;
 int agent_timer_init = 0;
+
+
 err_code_t flexran_agent_init_timer(void){
   
   LOG_I(FLEXRAN_AGENT, "init RB tree\n");
@@ -46,7 +48,11 @@ err_code_t flexran_agent_init_timer(void){
  return PROTOCOL__FLEXRAN_ERR__NO_ERR;
 }
 
+
+
 RB_GENERATE(flexran_agent_map, flexran_agent_timer_element_s, entry, flexran_agent_compare_timer);
+
+
 
 /* The timer_id might not be the best choice for the comparison */
 int flexran_agent_compare_timer(struct flexran_agent_timer_element_s *a, struct flexran_agent_timer_element_s *b){

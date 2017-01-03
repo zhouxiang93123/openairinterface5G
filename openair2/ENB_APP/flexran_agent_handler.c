@@ -95,27 +95,39 @@ Protocol__FlexranMessage* flexran_agent_handle_message (mid_t mod_id,
     goto error; 
   }
   
+  
   if ((decoded_message->msg_case > sizeof(agent_messages_callback) / (3 * sizeof(flexran_agent_message_decoded_callback))) || 
       (decoded_message->msg_dir > PROTOCOL__FLEXRAN_DIRECTION__UNSUCCESSFUL_OUTCOME)){
-    err_code= PROTOCOL__FLEXRAN_ERR__MSG_NOT_HANDLED;
+
+        err_code = PROTOCOL__FLEXRAN_ERR__MSG_NOT_HANDLED;
+
     goto error;
+
   }
     
   if (agent_messages_callback[decoded_message->msg_case-1][decoded_message->msg_dir-1] == NULL) {
-    err_code= PROTOCOL__FLEXRAN_ERR__MSG_NOT_SUPPORTED;
-    goto error;
+
+        err_code= PROTOCOL__FLEXRAN_ERR__MSG_NOT_SUPPORTED;
+        goto error;
 
   }
 
   err_code = ((*agent_messages_callback[decoded_message->msg_case-1][decoded_message->msg_dir-1])(mod_id, (void *) decoded_message, &reply_message));
+
   if ( err_code < 0 ){
-    goto error;
+
+          goto error;
+
   } else if (err_code == 1) { //If err_code > 1, we do not want to dispose the message yet
-    protocol__flexran_message__free_unpacked(decoded_message, NULL);
+
+        protocol__flexran_message__free_unpacked(decoded_message, NULL);
+
   }
+
   return reply_message;
   
 error:
+
   LOG_E(FLEXRAN_AGENT,"errno %d occured\n",err_code);
   return NULL;
 

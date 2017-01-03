@@ -48,7 +48,7 @@ void flexran_set_enb_vars(mid_t mod_id, ran_name_t ran){
   default :
     goto error;
   }
-
+   
   return; 
 
  error:
@@ -125,7 +125,7 @@ uint16_t flexran_get_future_sfn_sf (mid_t mod_id, int ahead_of_time) {
 
 int flexran_get_num_ues (mid_t mod_id){
 
-  return  ((UE_list_t *)enb_ue[mod_id])->num_UEs;
+  return  eNB_mac_inst[mod_id].UE_list.num_UEs;
 }
 
 int flexran_get_ue_crnti (mid_t mod_id, mid_t ue_id) {
@@ -635,11 +635,6 @@ int flexran_get_half_duplex(mid_t ue_id) {
 	//return halfduplex;
 }
 
-int flexran_get_intra_sf_hopping(mid_t ue_id) {
-	//TODO:Get proper value
-	//temp = (((UE_RRC_INST *)enb_ue_rrc[ue_id])->UECap->UE_EUTRA_Capability->featureGroupIndicators->buf);
-	//return (0 & ( 1 << (31)));
-}
 
 int flexran_get_type2_sb_1(mid_t ue_id) {
 	//TODO:Get proper value
@@ -648,10 +643,6 @@ int flexran_get_type2_sb_1(mid_t ue_id) {
 	//return (temp & ( 1 << (11)));
 }
 
-int flexran_get_ue_category(mid_t ue_id) {
-	//TODO:Get proper value
-	//return (((UE_RRC_INST *)enb_ue_rrc[ue_id])->UECap->UE_EUTRA_Capability->ue_Category);
-}
 
 int flexran_get_res_alloc_type1(mid_t ue_id) {
 	//TODO:Get proper value
@@ -863,3 +854,149 @@ int flexran_get_direction(mid_t ue_id, mid_t lc_id) {
   else if(lc_id == DTCH)
     return 1;
 }
+
+// New added, Morely RRC facilities
+
+
+int flexran_get_ue_imsi(mid_t mod_id, mid_t ue_id){
+
+ // uint32_t rnti = flexran_get_ue_crnti(mod_id, ue_id);
+ // enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], rnti);
+    
+ // if (enb_ue_context[mod_id] != NULL) {
+ //   //return enb_ue_context[mod_id]->ue_context.ue_imsi; 
+ // }
+ // return -1;
+}
+
+int flexran_get_ue_plmn(mid_t mod_id, mid_t ue_id){
+
+// enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+//  if ((enb_ue_context[mod_id] != NULL)) {
+//    return enb_ue_context[mod_id]>ue_context.plmn_id; 
+//  }
+//  return -1;
+}
+
+int flexran_get_ue_status(mid_t mod_id, mid_t ue_id){
+
+ //  enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if ((&enb_ue_context[mod_id] != NULL) && (&enb_ue_context[mod_id]->ue_context != NULL)) {
+ //   return enb_ue_context[mod_id]>ue_context.Status; 
+ // }
+ // return -1;
+}
+
+int flexran_get_ue_measgap_config(mid_t mod_id, mid_t ue_id){
+
+ //  enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if(enb_ue_context[mod_id] != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.measGapConfig != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.measGapConfig->present == MeasGapConfig_PR_setup) {
+ //    if (enb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.present ==
+ //                  MeasGapConfig__setup__gapOffset_PR_gp0) {
+ //      return MEAS_GAP_PATTERN__MGP_GP0;
+ //    } else if (enb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.present ==
+ //                  MeasGapConfig__setup__gapOffset_PR_gp1) {
+ //      return MEAS_GAP_PATTERN__MGP_GP1;
+ //    } else {
+ //      return MEAS_GAP_PATTERN__MGP_OFF;
+ //    }
+ //  }
+ //  return -1;
+}
+
+int flexran_get_ue_measgap_offset(mid_t mod_id, mid_t ue_id){
+
+ //  enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if(enb_ue_context[mod_id] != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.measGapConfig != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.measGapConfig->present == MeasGapConfig_PR_setup) {
+ //    if (enb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.present ==
+ //                  MeasGapConfig__setup__gapOffset_PR_gp0) {
+ //      return enb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.choice.gp0;
+ //    } else if (enb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.present ==
+ //                  MeasGapConfig__setup__gapOffset_PR_gp1) {
+ //      return nb_ue_context[mod_id]->ue_context.measGapConfig->choice.setup.gapOffset.choice.gp;
+ //    } 
+ //  }
+ //  return -1;
+}
+
+int flexran_get_ue_num_bands(mid_t mod_id, mid_t ue_id){
+
+ //  enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if(enb_ue_context[mod_id] != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.eutra_Capability != NULL) {
+ //      return enb_ue_context[mod_id]->ue_context.eutra_Capability->rf_Parameters.supportedBandListEUTRA.list.count;
+ //  }
+ //  return -1;
+}
+
+uint64_t* flexran_get_ue_bands(mid_t mod_id, mid_t ue_id){
+
+ //  int i;
+ //  int num_bands=0;
+ //  uint64_t *rf_bands;
+ //  enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if(enb_ue_context[mod_id] != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.eutra_Capability != NULL) {
+ //    num_bands = flexran_get_ue_num_bands(mod_id, ue_id);
+ //    rf_bands = (uint64_t) malloc (num_bands * sizeof(uint64_t));
+ //    for (i=0; i <num_bands; i++){
+ //      rf_band[i]= enb_ue_context[mod_id]->ue_context.eutra_Capability->rf_Parameters.supportedBandListEUTRA.list.array[i]->bandEUTRA;                                bandEUTRA
+ //    }
+ //   return rf_bands; 
+ //  }
+ //  return -1;
+}
+
+uint32_t * flexran_get_ue_duplex_mode(mid_t mod_id, mid_t ue_id) {
+  
+  // int i;
+  // uint32_t *duplex_mode;
+  // int num_bands = 0;
+  // enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+  // if(enb_ue_context[mod_id] != NULL &&
+  //   enb_ue_context[mod_id]->ue_context.eutra_Capability != NULL) {
+  //   num_bands = flexran_get_ue_num_bands(mod_id, ue_id);
+  //   duplex_mode = (uint32_t) malloc (num_bands * sizeof(uint32_t));
+  //   for (i =0; i < num_bands; i++){
+  //     if(enb_ue_context[mod_id]->UECap->UE_EUTRA_Capability->rf_Parameters.supportedBandListEUTRA.list.array[i]->halfDuplex > 0){
+  //       duplex_mode[i] = 0;
+  //     }
+  //     else {
+  //       duplex_mode[i] = 1;
+  //     }
+  // } 
+  // return duplex_mode;
+}
+
+
+// TODO --------------
+
+// int flexran_get_ue_category(mid_t mod_id, mid_t ue_id){
+
+ // enb_ue_context[mod_id]= flexran_agent_get_ue_context (enb[mod_id], ue_id);
+
+ // if(enb_ue_context[mod_id] != NULL &&
+ //    enb_ue_context[mod_id]->ue_context.eutra_Capability != NULL) {
+ //    return enb_ue_context[mod_id]->ue_context.UE_EUTRA_Capability->ue_Category;
+ //  }
+ //  return -1;
+// }
+
+
+int flexran_get_intra_sf_hopping(mid_t ue_id) {
+  //TODO:Get proper value
+  //temp = (((UE_RRC_INST *)enb_ue_rrc[ue_id])->UECap->UE_EUTRA_Capability->featureGroupIndicators->buf);
+  //return (0 & ( 1 << (31)));
+}
+

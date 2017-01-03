@@ -45,6 +45,8 @@ int channel_container_init = 0;
 int agent_task_created = 0;
 
 
+// I don't know why here!
+
 Protocol__FlexranMessage *flexran_agent_timeout(void* args){
 
   //  flexran_agent_timer_args_t *timer_args = calloc(1, sizeof(*timer_args));
@@ -174,16 +176,20 @@ void *flexran_agent_task(void *args){
       break;
     
     case TIMER_HAS_EXPIRED:
-      msg = flexran_agent_process_timeout(msg_p->ittiMsg.timer_has_expired.timer_id, msg_p->ittiMsg.timer_has_expired.arg);
-      if (msg != NULL){
-  data=flexran_agent_pack_message(msg,&size);
-  elem = get_timer_entry(msg_p->ittiMsg.timer_has_expired.timer_id);
-  if (flexran_agent_msg_send(elem->agent_id, FLEXRAN_AGENT_DEFAULT, data, size, priority)) {
-    err_code = PROTOCOL__FLEXRAN_ERR__MSG_ENQUEUING;
-    goto error;
-  }
 
-  LOG_D(FLEXRAN_AGENT,"sent message with size %d\n", size);
+      msg = flexran_agent_process_timeout(msg_p->ittiMsg.timer_has_expired.timer_id, msg_p->ittiMsg.timer_has_expired.arg);
+
+      if (msg != NULL){
+
+                data = flexran_agent_pack_message(msg,&size);
+                elem = get_timer_entry(msg_p->ittiMsg.timer_has_expired.timer_id);
+
+                if (flexran_agent_msg_send(elem->agent_id, FLEXRAN_AGENT_DEFAULT, data, size, priority)) {
+                        err_code = PROTOCOL__FLEXRAN_ERR__MSG_ENQUEUING;
+                        goto error;
+                }
+
+                LOG_D(FLEXRAN_AGENT,"sent message with size %d\n", size);
       }
       break;
 
@@ -195,6 +201,7 @@ void *flexran_agent_task(void *args){
     result = itti_free (ITTI_MSG_ORIGIN_ID(msg_p), msg_p);
     AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
     continue;
+
   error:
     LOG_E(FLEXRAN_AGENT,"flexran_agent_task: error %d occured\n",err_code);
   } while (1);
@@ -268,24 +275,32 @@ int flexran_agent_start(mid_t mod_id, const Enb_properties_array_t* enb_properti
    * check the configuration
    */ 
   if (enb_properties->properties[mod_id]->flexran_agent_cache != NULL) {
-    strncpy(local_cache, enb_properties->properties[mod_id]->flexran_agent_cache, sizeof(local_cache));
-    local_cache[sizeof(local_cache) - 1] = 0;
-  } else {
-    strcpy(local_cache, DEFAULT_FLEXRAN_AGENT_CACHE);
+
+          strncpy(local_cache, enb_properties->properties[mod_id]->flexran_agent_cache, sizeof(local_cache));
+          local_cache[sizeof(local_cache) - 1] = 0;
+  } 
+  else {
+          strcpy(local_cache, DEFAULT_FLEXRAN_AGENT_CACHE);
   }
   
   if (enb_properties->properties[mod_id]->flexran_agent_ipv4_address != NULL) {
-    strncpy(in_ip, enb_properties->properties[mod_id]->flexran_agent_ipv4_address, sizeof(in_ip) );
-    in_ip[sizeof(in_ip) - 1] = 0; // terminate string
-  } else {
-    strcpy(in_ip, DEFAULT_FLEXRAN_AGENT_IPv4_ADDRESS ); 
+          strncpy(in_ip, enb_properties->properties[mod_id]->flexran_agent_ipv4_address, sizeof(in_ip) );
+          in_ip[sizeof(in_ip) - 1] = 0; // terminate string
+  } 
+  else {
+          strcpy(in_ip, DEFAULT_FLEXRAN_AGENT_IPv4_ADDRESS ); 
   }
   
   if (enb_properties->properties[mod_id]->flexran_agent_port != 0 ) {
-    in_port = enb_properties->properties[mod_id]->flexran_agent_port;
-  } else {
-    in_port = DEFAULT_FLEXRAN_AGENT_PORT ;
+
+          in_port = enb_properties->properties[mod_id]->flexran_agent_port;
+
+  } 
+  else {
+
+          in_port = DEFAULT_FLEXRAN_AGENT_PORT ;
   }
+  
   LOG_I(FLEXRAN_AGENT,"starting enb agent client for module id %d on ipv4 %s, port %d\n",  
 	flexran_agent[mod_id].enb_id,
 	in_ip,
@@ -295,9 +310,12 @@ int flexran_agent_start(mid_t mod_id, const Enb_properties_array_t* enb_properti
    * Initialize the channel container
    */
   if (!channel_container_init) {
-    flexran_agent_init_channel_container();
-    channel_container_init = 1;
+
+          flexran_agent_init_channel_container();
+          channel_container_init = 1;
   }
+  
+  
   /*Create the async channel info*/
   flexran_agent_instance_t *channel_info = flexran_agent_async_channel_info(mod_id, in_ip, in_port);
 
@@ -309,13 +327,13 @@ int flexran_agent_start(mid_t mod_id, const Enb_properties_array_t* enb_properti
 
   
   if (channel_id <= 0) {
-    goto error;
+          goto error;
   }
 
   flexran_agent_channel_t *channel = get_channel(channel_id);
   
   if (channel == NULL) {
-    goto error;
+          goto error;
   }
 
   /*Register the channel for all underlying agents (use FLEXRAN_AGENT_MAX)*/
@@ -351,11 +369,12 @@ int flexran_agent_start(mid_t mod_id, const Enb_properties_array_t* enb_properti
    * start the enb agent task for tx and interaction with the underlying network function
    */ 
   if (!agent_task_created) {
-    if (itti_create_task (TASK_FLEXRAN_AGENT, flexran_agent_task, (void *) &flexran_agent[mod_id]) < 0) {
-      LOG_E(FLEXRAN_AGENT, "Create task for FlexRAN Agent failed\n");
-      return -1;
-    }
-    agent_task_created = 1;
+
+        if (itti_create_task (TASK_FLEXRAN_AGENT, flexran_agent_task, (void *) &flexran_agent[mod_id]) < 0) {
+          LOG_E(FLEXRAN_AGENT, "Create task for FlexRAN Agent failed\n");
+          return -1;
+        }
+        agent_task_created = 1;
   }
   
   LOG_I(FLEXRAN_AGENT,"client ends\n");

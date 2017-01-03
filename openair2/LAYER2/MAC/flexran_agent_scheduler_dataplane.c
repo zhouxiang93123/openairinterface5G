@@ -357,11 +357,11 @@ void flexran_apply_ue_spec_scheduling_decisions(mid_t mod_id,
     eNB_UE_stats->dlsch_mcs1 = dl_dci->mcs[0];
 
     //Fill the proper DCI of OAI
-    fill_oai_dci(mod_id, CC_id, rnti, dl_dci);
+    flexran_fill_oai_dci(mod_id, CC_id, rnti, dl_dci);
   }
 }
 
-void fill_oai_dci(mid_t mod_id, uint32_t CC_id, uint32_t rnti,
+void flexran_fill_oai_dci(mid_t mod_id, uint32_t CC_id, uint32_t rnti,
 		  const Protocol__FlexDlDci *dl_dci) {
 
   void         *DLSCH_dci        = NULL;

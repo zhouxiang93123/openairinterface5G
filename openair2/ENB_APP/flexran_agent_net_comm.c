@@ -82,9 +82,11 @@ int flexran_agent_register_channel(mid_t mod_id, flexran_agent_channel_t *channe
 
   if (agent_id == FLEXRAN_AGENT_MAX) {
     for (i = 0; i < FLEXRAN_AGENT_MAX; i++) {
+      
       agent_channel[mod_id][i] = channel;
     }
   } else {
+    
     agent_channel[mod_id][agent_id] = channel;
   }
   return 0;
