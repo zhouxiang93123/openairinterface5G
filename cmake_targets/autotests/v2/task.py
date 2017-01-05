@@ -94,15 +94,14 @@ class ReaderThread(threading.Thread):
         try:
             outfile = open(self.logfile, "w")
         except BaseException, e:
-            log("ERROR: ReaderThread: " + self.logfile)
-            log(str(e))
+            log("ERROR: ReaderThread: " + self.logfile + ": " + str(e))
             os._exit(1)
         while True:
             try:
                (a, b, c) = select.select([ self.fdin ], [], [ self.fdin ])
             except BaseException, e:
-               log("ERROR: ReaderThread: select failed")
-               log(str(e))
+               log("ERROR: ReaderThread: " + self.logfile +
+                   ": select failed: " + str(e))
                os._exit(1)
             try:
                 z = os.read(self.fdin, 1024)
@@ -111,11 +110,11 @@ class ReaderThread(threading.Thread):
                   #pipe has died, quit the thread
                   break
                 else:
-                  log("ERROR: ReaderThread: unhandled error")
-                  log(str(e))
+                  log("ERROR: ReaderThread: " + self.logfile +
+                      ": unhandled error: " + str(e))
             except BaseException, e:
-                log("ERROR: ReaderThread: unhandled error")
-                log(str(e))
+                log("ERROR: ReaderThread: " + self.logfile +
+                    ": unhandled error: " + str(e))
                 break
             try:
                 produced = 0
@@ -137,14 +136,12 @@ class ReaderThread(threading.Thread):
                 outfile.flush()
                 self.producer.add(produced)
             except BaseException, e:
-                log("ERROR: ReaderThread: " + self.logfile)
-                log(str(e))
+                log("ERROR: ReaderThread: " + self.logfile + ": " + str(e))
                 os._exit(1)
         try:
             outfile.close()
         except BaseException, e:
-            log("ERROR: ReaderThread: " + self.logfile)
-            log(str(e))
+            log("ERROR: ReaderThread: " + self.logfile + ": " + str(e))
             os._exit(1)
         #close the pipe, don't care about errors
         try:
@@ -160,9 +157,11 @@ class SenderQuit(Exception):
 
 #this thread sends commands to the child process of the task
 #it waits for the prompt between each command
+#'event' is used for the main thread to wait for one of several tasks
+#to quit, meaning error or end-of-test
 class SenderThread(threading.Thread):
     def __init__(self, fdout, prompt_counter, connection, env, action,
-                 description, prompt):
+                 description, prompt, event=None):
         threading.Thread.__init__(self)
         self.fdin = fdout
         self.prompt_counter = prompt_counter
@@ -172,6 +171,8 @@ class SenderThread(threading.Thread):
         self.description = description
         self.prompt = prompt
         self.count = 0
+        self.event = event
+        self.alive = True
 
     def wait_prompt(self):
         self.count = self.prompt_counter.get(self.count)
@@ -237,7 +238,7 @@ class SenderThread(threading.Thread):
         try:
             self._run()
         except SenderQuit:
-            log("'" + self.description + "' quit ok")
+            log("WARNING: '" + self.description + "' exits too early?")
             pass
         except BaseException, e:
             log("ERROR: task failed:    " + str(e))
@@ -245,9 +246,23 @@ class SenderThread(threading.Thread):
             log("ERROR: description is: " + self.description)
             os._exit(1)
 
+        self.alive = False
+
+        if self.event != None:
+            self.event.set()
+
+WAITLOG_RUNNING = 0
+WAITLOG_SUCCESS = 1
+WAITLOG_FAILURE = 2
+
+class WaitlogFailed(Exception):
+    pass
+
+#'event' is used by main thread to wait for any of several threads to quit.
+#'Task' passes it the 'SenderThread' above, which sets it when it finishes.
 class Task:
     def __init__(self, action, description, machine, user, password, env,
-                 logfile, post_action = None):
+                 logfile, post_action = None, event=None):
         self.action      = action
         self.description = description
         self.machine     = machine
@@ -268,22 +283,55 @@ class Task:
 
         self.sender = SenderThread(self.connection.fd, prompt_counter,
                                    self.connection, env, action, description,
-                                   prompt)
+                                   prompt, event)
         self.sender.start()
 
-
     def wait(self, timeout=-1):
+        if self.connection.active == False:
+            return self.connection.retcode
         try:
             (pid, ret) = os.waitpid(self.connection.pid, 0)
         except KeyboardInterrupt, e:
-            log("ERROR: ctrl+c catched!" + str(e))
+            log("ERROR: ctrl+c catched! " + str(e))
             os._exit(1)
         except BaseException, e:
             log("ERROR: " + str(e))
             os._exit(1)
+        self.sender.join()
+        self.reader.join()
         return ret
 
-    def waitlog(self, s):
+    #this function should not be called, it is used internally by 'waitlog'
+    #in mode 'background thread'
+    #TODO: join() the thread at some point
+    def _waitlog_thread(self, task, s):
+        consumed = 0
+        while True:
+            consumed = task.producer.get(consumed)
+            if consumed == -1:
+                log("ERROR: string '" + s + "' not found in logfile " +
+                    task.logfile)
+                task.waitlog_state = WAITLOG_FAILURE
+                task.waitlog_event.set()
+                return
+            if s in open(task.logfile).read():
+                task.waitlog_state = WAITLOG_SUCCESS
+                task.waitlog_event.set()
+                return
+
+    #two ways to wait for a string in the log file:
+    #  - blocking way
+    #  - background thread, using an Event to signal success/failure
+    def waitlog(self, s, event=None):
+        if event != None:
+            self.waitlog_state = WAITLOG_RUNNING
+            self.waitlog_event = event
+            self.waitlog_thread = \
+                threading.Thread(target=self._waitlog_thread,
+                                 args=(self, s))
+            self.waitlog_thread.start()
+            return
+
         #TODO: optimize, do not process all the file at each wakeup
         consumed = 0
         while True:
@@ -291,12 +339,26 @@ class Task:
             if consumed == -1:
                 log("ERROR: string '" + s + "' not found in logfile " +
                     self.logfile)
-                os._exit(1)
+                raise WaitlogFailed()
             if s in open(self.logfile).read():
                 return
 
     def sendnow(self, x):
         self.connection.send(x)
+
+    def alive(self):
+        return self.sender.alive
+
+    def kill(self):
+        self.connection.kill()
+        #put some error log in logfile, for verbosity
+        try:
+            f = open(self.logfile, "a+")
+            f.write("\n\n" + utils.RED + "TEST_SETUP_ERROR: " + utils.RESET +
+                    "task killed by test setup\n\n");
+            close(f)
+        except BaseException, e:
+            pass
 
     def postaction(self):
         if self.post_action != None:

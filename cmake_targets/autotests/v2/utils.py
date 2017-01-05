@@ -67,3 +67,18 @@ RED="\x1b[31m"
 GREEN="\x1b[32m"
 YELLOW="\x1b[33m"
 RESET="\x1b[m"
+
+#an exception raised when a test fails
+class TestFailed(Exception):
+    pass
+
+#this function returns True if a test in 'x' is set to True
+#to be used as: if do_tests(tests['b210']['alu']) ...
+def do_tests(x):
+    if type(x) == list:
+        for v in x:
+            if do_tests(v): return True
+        return False
+    if type(x) == dict: return do_tests(x.values())
+    if x == True: return True
+    return False

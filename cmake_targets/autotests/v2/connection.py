@@ -1,4 +1,4 @@
-import os, subprocess, time, fcntl, termios, tty
+import os, subprocess, time, fcntl, termios, tty, signal
 
 from utils import log
 
@@ -47,25 +47,29 @@ class connection:
         self.pid = pid
         self.fd = fd
         self.active = True
+        self.retcode = -1
 
     def send(self, string):
         if self.active == False:
             log("ERROR: send: child is dead for '" + self.description + "'")
+            return -1
 
         try:
             (pid, out) = os.waitpid(self.pid, os.WNOHANG)
         except BaseException, e:
-            log("ERROR: waitpid failed for '" + self.description + "'")
-            log(str(e))
-            (pid, out) = (self.pid, 0)
+            log("ERROR: send: waitpid failed for '" + self.description +
+                "': " + str(e))
+            (pid, out) = (self.pid, 1)
         if pid != 0:
-            log("ERROR: child process dead for '" + self.description + "'")
+            log("ERROR: send: child process dead for '" +
+                self.description + "'")
             try:
                 os.close(self.fd)
             except BaseException, e:
-                log("ERROR: close failed for '" + self.description + "'")
-                log(str(e))
+                #we don't care about errors at this point
+                pass
             self.active = False
+            self.retcode = out
             return -1
 
         length = len(string)
@@ -73,12 +77,23 @@ class connection:
             try:
                 ret = os.write(self.fd, string)
             except BaseException, e:
-                log("ERROR: send fails for '" + self.description + "'")
+                log("ERROR: send fails for '" + self.description + "': " +
+                    str(e))
                 os._exit(1)
 
             if ret == 0:
-                log("ERROR: write returns 0 for '" + self.description + "'")
+                log("ERROR: send: write returns 0 for '" +
+                    self.description + "'")
                 os._exit(1)
 
             length = length - ret
             string = string[ret:]
+
+        return 0
+
+    def kill(self, signal=signal.SIGTERM):
+        log("INFO: kill connection '" + self.description + "'")
+        try:
+            os.kill(self.pid, signal)
+        except BaseException, e:
+            log("ERROR: connection.kill: " + str(e))

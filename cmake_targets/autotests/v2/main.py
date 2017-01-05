@@ -4,7 +4,7 @@ import os, re, sys, time, threading, thread
 import xml.etree.ElementTree as ET
 
 from utils import test_in_list, quickshell, log
-from task import Task
+from task import Task, WAITLOG_SUCCESS, WAITLOG_FAILURE
 from machine_list import MachineList
 
 oai_user         = os.environ.get('OAI_USER')
@@ -277,174 +277,408 @@ for test in todo_tests:
 machine_list.wait_all_free()
 
 ##############################################################################
-# run ALU softmodem tests                                                    #
+# run eNB softmodem tests                                                    #
 ##############################################################################
 
+tests = {
+  'b210' : {
+    'alu' : {
+      '5' : {
+        'bandrich' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }},
+        'sony' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }}},
+      '10' : {
+        'bandrich' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }},
+        'sony' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }}},
+      '20' : {
+        'bandrich' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }},
+        'sony' : {
+          'tcp' : { 'up': False, 'down' : False },
+          'udp' : { 'up': False, 'down' : False }}}},
+    'openair-cn' : {}
+  },
+  'x310' : {
+    'alu' : {},
+    'openair-cn' : {}
+  },
+  'exmimo2' : {
+    'alu' : {},
+    'openair-cn' : {}
+  }
+}
+
+todo_tests_ids = []
 for test in todo_tests:
-    action = test.findtext('class')
-    if action != 'lte-softmodem':
-        continue
-    if not "start_ltebox" in test.findtext('EPC_main_exec'):
-        continue
-    id = test.get('id')
-    log("INFO: Running ALU test " + id)
-    logdir = openair_dir + "/cmake_targets/autotests/log/" + id
-    quickshell("mkdir -p " + logdir)
-    epc_machine = test.findtext('EPC')
-    enb_machine = test.findtext('eNB')
-    ue_machine = test.findtext('UE')
+    todo_tests_ids.append(test.get('id'))
 
-    #launch HSS, wait for prompt
-    log("INFO: " + id + ": run HSS")
-    task_hss = Task("actions/alu_hss.bash",
-                    "ALU HSS",
-                    epc_machine,
-                    oai_user,
-                    oai_password,
-                    env,
-                    logdir + "/alu_hss." + epc_machine)
-    task_hss.waitlog('S6AS_SIM-> ')
+for test in todo_tests_ids:
+  if test=='015500':tests['b210']['alu'][ '5']['bandrich']['udp']['ul']=True
+  if test=='015501':tests['b210']['alu']['10']['bandrich']['udp']['ul']=True
+  if test=='015502':tests['b210']['alu']['20']['bandrich']['udp']['ul']=True
+  if test=='015503':tests['b210']['alu'][ '5']['bandrich']['udp']['dl']=True
+  if test=='015504':tests['b210']['alu']['10']['bandrich']['udp']['dl']=True
+  if test=='015505':tests['b210']['alu']['20']['bandrich']['udp']['dl']=True
+  if test=='015506':log('WARNING: skip test ' + test) #TODO
+  if test=='015507':log('WARNING: skip test ' + test) #TODO
+  if test=='015508':log('WARNING: skip test ' + test) #TODO
+  if test=='015509':log('WARNING: skip test ' + test) #TODO
+  if test=='015510':log('WARNING: skip test ' + test) #TODO
+  if test=='015511':log('WARNING: skip test ' + test) #TODO
+  if test=='015512':tests['b210']['alu'][ '5']['bandrich']['tcp']['ul']=True
+  if test=='015513':tests['b210']['alu']['10']['bandrich']['tcp']['ul']=True
+  if test=='015514':tests['b210']['alu']['20']['bandrich']['tcp']['ul']=True
+  if test=='015515':tests['b210']['alu'][ '5']['bandrich']['tcp']['dl']=True
+  if test=='015516':tests['b210']['alu']['10']['bandrich']['tcp']['dl']=True
+  if test=='015517':tests['b210']['alu']['20']['bandrich']['tcp']['dl']=True
+  if test=='015518':log('WARNING: skip test ' + test) #TODO
+  if test=='015519':log('WARNING: skip test ' + test) #TODO
+  if test=='015520':log('WARNING: skip test ' + test) #TODO
+  if test=='015521':log('WARNING: skip test ' + test) #TODO
+  if test=='015522':log('WARNING: skip test ' + test) #TODO
+  if test=='015523':log('WARNING: skip test ' + test) #TODO
 
-    #then launch EPC, wait for connection on HSS side
-    log("INFO: " + id + ": run EPC")
-    task = Task("actions/alu_epc.bash",
-                "ALU EPC",
-                epc_machine,
-                oai_user,
-                oai_password,
-                env,
-                logdir + "/alu_epc." + epc_machine)
-    ret = task.wait()
-    if ret != 0:
-        log("ERROR: EPC start failure");
-        os._exit(1)
-    task_hss.waitlog('Connected\n')
+  if test=='015600':log('WARNING: skip test ' + test) #TODO
+  if test=='015601':log('WARNING: skip test ' + test) #TODO
+  if test=='015602':log('WARNING: skip test ' + test) #TODO
+  if test=='015603':log('WARNING: skip test ' + test) #TODO
+  if test=='015604':log('WARNING: skip test ' + test) #TODO
+  if test=='015605':log('WARNING: skip test ' + test) #TODO
 
-    #compile softmodem
-    log("INFO: " + id + ": compile softmodem")
-    envcomp = list(env)
-    envcomp.append('BUILD_ARGUMENTS="' +
-                   test.findtext('eNB_compile_prog_args') + '"')
-    #we don't care about BUILD_OUTPUT but it's required (TODO: change that)
-    envcomp.append('BUILD_OUTPUT=/')
-    task = Task("actions/compilation.bash",
-                "compile softmodem",
-                enb_machine,
-                oai_user,
-                oai_password,
-                envcomp,
-                logdir + "/compile_softmodem." + enb_machine)
-    ret = task.wait()
-    if ret != 0:
-        log("ERROR: softmodem compilation failure");
-        os._exit(1)
+  if test=='015700':log('WARNING: skip test ' + test) #TODO
+  if test=='015701':log('WARNING: skip test ' + test) #TODO
+  if test=='015702':log('WARNING: skip test ' + test) #TODO
+  if test=='015703':log('WARNING: skip test ' + test) #TODO
+  if test=='015704':log('WARNING: skip test ' + test) #TODO
+  if test=='015705':log('WARNING: skip test ' + test) #TODO
 
-#    #copy wanted configuration file
-#    quickshell("sshpass -p " + oai_password +
-#               " scp config/enb.band7.tm1.usrpb210.conf " +
-#                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
+  if test=='015800':log('WARNING: skip test ' + test) #TODO
+  if test=='015801':log('WARNING: skip test ' + test) #TODO
+  if test=='015802':log('WARNING: skip test ' + test) #TODO
+  if test=='015803':log('WARNING: skip test ' + test) #TODO
+  if test=='015804':log('WARNING: skip test ' + test) #TODO
+  if test=='015805':log('WARNING: skip test ' + test) #TODO
+  if test=='015806':log('WARNING: skip test ' + test) #TODO
+  if test=='015807':log('WARNING: skip test ' + test) #TODO
+  if test=='015808':log('WARNING: skip test ' + test) #TODO
+  if test=='015809':log('WARNING: skip test ' + test) #TODO
+  if test=='015810':log('WARNING: skip test ' + test) #TODO
+  if test=='015811':log('WARNING: skip test ' + test) #TODO
+  if test=='015812':log('WARNING: skip test ' + test) #TODO
+  if test=='015813':log('WARNING: skip test ' + test) #TODO
+  if test=='015814':log('WARNING: skip test ' + test) #TODO
+  if test=='015815':log('WARNING: skip test ' + test) #TODO
+  if test=='015816':log('WARNING: skip test ' + test) #TODO
+  if test=='015817':log('WARNING: skip test ' + test) #TODO
+  if test=='015818':log('WARNING: skip test ' + test) #TODO
+  if test=='015819':log('WARNING: skip test ' + test) #TODO
+  if test=='015820':log('WARNING: skip test ' + test) #TODO
+  if test=='015821':log('WARNING: skip test ' + test) #TODO
+  if test=='015822':log('WARNING: skip test ' + test) #TODO
+  if test=='015823':log('WARNING: skip test ' + test) #TODO
 
-    #run softmodem
-    log("INFO: " + id + ": run softmodem")
-    task_enb = Task("actions/run_enb.bash",
-                    "run softmodem",
-                    enb_machine,
-                    oai_user,
-                    oai_password,
-                    env,
-                    logdir + "/run_softmodem." + enb_machine)
-    task_enb.waitlog('got sync')
+  if test=='016000':log('WARNING: skip test ' + test) #TODO
+  if test=='016001':log('WARNING: skip test ' + test) #TODO
+  if test=='016002':log('WARNING: skip test ' + test) #TODO
+  if test=='016003':log('WARNING: skip test ' + test) #TODO
+  if test=='016004':log('WARNING: skip test ' + test) #TODO
+  if test=='016005':log('WARNING: skip test ' + test) #TODO
 
-    #start UE
-    log("INFO: " + id + ": start bandrich UE")
-    task_ue = Task("actions/start_bandrich.bash",
-                   "start bandrich UE",
-                   ue_machine,
-                   oai_user,
-                   oai_password,
-                   env,
-                   logdir + "/start_bandrich." + ue_machine)
-    task_ue.waitlog("local  IP address")
+  if test=='016100':log('WARNING: skip test ' + test) #TODO
+  if test=='016101':log('WARNING: skip test ' + test) #TODO
+  if test=='016102':log('WARNING: skip test ' + test) #TODO
+  if test=='016103':log('WARNING: skip test ' + test) #TODO
+  if test=='016104':log('WARNING: skip test ' + test) #TODO
+  if test=='016105':log('WARNING: skip test ' + test) #TODO
 
-    #get bandrich UE IP
-    l = open(task_ue.logfile, "r").read()
-    ue_ip = re.search("local  IP address (.*)\n", l).groups()[0]
-    log("INFO: " + id + ": bandrich UE IP address: " + ue_ip)
+  if test=='016300':log('WARNING: skip test ' + test) #TODO
+  if test=='016301':log('WARNING: skip test ' + test) #TODO
+  if test=='016302':log('WARNING: skip test ' + test) #TODO
+  if test=='016303':log('WARNING: skip test ' + test) #TODO
+  if test=='016304':log('WARNING: skip test ' + test) #TODO
+  if test=='016305':log('WARNING: skip test ' + test) #TODO
 
-    #run traffic
-    log("INFO: " + id + ": run downlink TCP traffic")
+  if test=='016500':log('WARNING: skip test ' + test) #TODO
+  if test=='016501':log('WARNING: skip test ' + test) #TODO
+  if test=='016502':log('WARNING: skip test ' + test) #TODO
+  if test=='016503':log('WARNING: skip test ' + test) #TODO
+  if test=='016504':log('WARNING: skip test ' + test) #TODO
+  if test=='016505':log('WARNING: skip test ' + test) #TODO
 
-    log("INFO: " + id + ":     launch server")
-    task_traffic_ue = Task("actions/downlink_bandrich.bash",
-                           "start iperf on bandrich UE as server",
-                           ue_machine,
-                           oai_user,
-                           oai_password,
-                           env,
-                           logdir + "/downlink_bandrich." + ue_machine)
-    task_traffic_ue.waitlog("Server listening on TCP port 5001")
+  if test=='017000':log('WARNING: skip test ' + test) #TODO
+  if test=='017001':log('WARNING: skip test ' + test) #TODO
+  if test=='017002':log('WARNING: skip test ' + test) #TODO
+  if test=='017003':log('WARNING: skip test ' + test) #TODO
+  if test=='017004':log('WARNING: skip test ' + test) #TODO
+  if test=='017005':log('WARNING: skip test ' + test) #TODO
 
-    log("INFO: " + id + ":     launch client")
-    envepc = list(env)
-    envepc.append("UE_IP=" + ue_ip)
-    task = Task("actions/downlink_epc.bash",
-                "start iperf on EPC as client",
-                epc_machine,
-                oai_user,
-                oai_password,
-                envepc,
-                logdir + "/downlink_epc." + epc_machine)
-    log("INFO: " + id + ":     wait for client")
-    ret = task.wait()
-    if ret != 0:
-        log("ERROR: " + id + ": downlink traffic failed")
-        #not sure if we have to quit here or not
-        #os._exit(1)
+  if test=='017500':log('WARNING: skip test ' + test) #TODO
+  if test=='017501':log('WARNING: skip test ' + test) #TODO
+  if test=='017502':log('WARNING: skip test ' + test) #TODO
+  if test=='017503':log('WARNING: skip test ' + test) #TODO
+  if test=='017504':log('WARNING: skip test ' + test) #TODO
+  if test=='017505':log('WARNING: skip test ' + test) #TODO
 
-    #stop downlink server
-    log("INFO: " + id + ":     stop server")
-    task_traffic_ue.sendnow("%c%c" % (3, 3))
-    task_traffic_ue.wait()
+  if test=='018000':log('WARNING: skip test ' + test) #TODO
+  if test=='018001':log('WARNING: skip test ' + test) #TODO
+  if test=='018002':log('WARNING: skip test ' + test) #TODO
+  if test=='018003':log('WARNING: skip test ' + test) #TODO
+  if test=='018004':log('WARNING: skip test ' + test) #TODO
+  if test=='018005':log('WARNING: skip test ' + test) #TODO
 
-    #stop UE
-    log("INFO: " + id + ": stop bandrich UE")
-    task_ue.sendnow("%c" % 3)
-    ret = task_ue.wait()
-    if ret != 0:
-        log("ERROR: " + id + ": task bandrich UE failed")
-        #not sure if we have to quit here or not
-        #os._exit(1)
+  if test=='018500':log('WARNING: skip test ' + test) #TODO
+  if test=='018501':log('WARNING: skip test ' + test) #TODO
+  if test=='018502':log('WARNING: skip test ' + test) #TODO
+  if test=='018503':log('WARNING: skip test ' + test) #TODO
+  if test=='018504':log('WARNING: skip test ' + test) #TODO
+  if test=='018505':log('WARNING: skip test ' + test) #TODO
 
-    #stop softmodem
-    log("INFO: " + id + ": stop softmodem")
-    task_enb.sendnow("%c" % 3)
-    ret = task_enb.wait()
-    if ret != 0:
-        log("ERROR: " + id + ": softmodem failed")
-        #not sure if we have to quit here or not
-        #os._exit(1)
+  if test=='025500':log('WARNING: skip test ' + test) #TODO
+  if test=='025501':log('WARNING: skip test ' + test) #TODO
+  if test=='025502':log('WARNING: skip test ' + test) #TODO
+  if test=='025503':log('WARNING: skip test ' + test) #TODO
+  if test=='025504':log('WARNING: skip test ' + test) #TODO
+  if test=='025505':log('WARNING: skip test ' + test) #TODO
+  if test=='025506':log('WARNING: skip test ' + test) #TODO
+  if test=='025507':log('WARNING: skip test ' + test) #TODO
+  if test=='025508':log('WARNING: skip test ' + test) #TODO
+  if test=='025509':log('WARNING: skip test ' + test) #TODO
+  if test=='025510':log('WARNING: skip test ' + test) #TODO
+  if test=='025511':log('WARNING: skip test ' + test) #TODO
+  if test=='025512':log('WARNING: skip test ' + test) #TODO
+  if test=='025513':log('WARNING: skip test ' + test) #TODO
+  if test=='025514':log('WARNING: skip test ' + test) #TODO
+  if test=='025515':log('WARNING: skip test ' + test) #TODO
+  if test=='025516':log('WARNING: skip test ' + test) #TODO
+  if test=='025517':log('WARNING: skip test ' + test) #TODO
+  if test=='025518':log('WARNING: skip test ' + test) #TODO
+  if test=='025519':log('WARNING: skip test ' + test) #TODO
+  if test=='025520':log('WARNING: skip test ' + test) #TODO
+  if test=='025521':log('WARNING: skip test ' + test) #TODO
+  if test=='025522':log('WARNING: skip test ' + test) #TODO
+  if test=='025523':log('WARNING: skip test ' + test) #TODO
 
-    #stop EPC, wait for disconnection on HSS side
-    log("INFO: " + id + ": stop EPC")
-    task = Task("actions/alu_epc_stop.bash",
-                "ALU EPC stop",
-                epc_machine,
-                oai_user,
-                oai_password,
-                env,
-                logdir + "/alu_epc_stop." + epc_machine)
-    ret = task.wait()
-    if ret != 0:
-        log("ERROR: " + id + ": ALU EPC stop failed")
-        os._exit(1)
-    task_hss.waitlog('Disconnected\n')
+  if test=='025700':log('WARNING: skip test ' + test) #TODO
+  if test=='025701':log('WARNING: skip test ' + test) #TODO
+  if test=='025702':log('WARNING: skip test ' + test) #TODO
+  if test=='025703':log('WARNING: skip test ' + test) #TODO
+  if test=='025704':log('WARNING: skip test ' + test) #TODO
+  if test=='025705':log('WARNING: skip test ' + test) #TODO
 
-    log("INFO: " + id + ": stop HSS")
-    task_hss.sendnow("exit\n")
-    ret = task_hss.wait()
-    if ret != 0:
-        log("ERROR: " + id + ": ALU HSS failed")
-        os._exit(1)
+from alu_test import run_b210_alu
+
+#B210 ALU tests
+
+run_b210_alu(tests, openair_dir, oai_user, oai_password, env)
+
+#for test in todo_tests:
+#    action = test.findtext('class')
+#    if action != 'lte-softmodem':
+#        continue
+#    if not "start_ltebox" in test.findtext('EPC_main_exec'):
+#        continue
+#    id = test.get('id')
+#    log("INFO: Running ALU test " + id)
+#    logdir = openair_dir + "/cmake_targets/autotests/log/" + id
+#    quickshell("mkdir -p " + logdir)
+#    epc_machine = test.findtext('EPC')
+#    enb_machine = test.findtext('eNB')
+#    ue_machine = test.findtext('UE')
+#
+#    #event object used to wait for several tasks at once
+#    event = threading.Event()
+#
+#    #launch HSS, wait for prompt
+#    log("INFO: " + id + ": run HSS")
+#    task_hss = Task("actions/alu_hss.bash",
+#                    "ALU HSS",
+#                    epc_machine,
+#                    oai_user,
+#                    oai_password,
+#                    env,
+#                    logdir + "/alu_hss." + epc_machine, event=event)
+#    task_hss.waitlog('S6AS_SIM-> ')
+#
+#    #then launch EPC, wait for connection on HSS side
+#    log("INFO: " + id + ": run EPC")
+#    task = Task("actions/alu_epc.bash",
+#                "ALU EPC",
+#                epc_machine,
+#                oai_user,
+#                oai_password,
+#                env,
+#                logdir + "/alu_epc." + epc_machine)
+#    ret = task.wait()
+#    if ret != 0:
+#        log("ERROR: EPC start failure");
+#        os._exit(1)
+#    task_hss.waitlog('Connected\n')
+#
+#    #compile softmodem
+#    log("INFO: " + id + ": compile softmodem")
+#    envcomp = list(env)
+#    envcomp.append('BUILD_ARGUMENTS="' +
+#                   test.findtext('eNB_compile_prog_args') + '"')
+#    #we don't care about BUILD_OUTPUT but it's required (TODO: change that)
+#    envcomp.append('BUILD_OUTPUT=/')
+#    task = Task("actions/compilation.bash",
+#                "compile softmodem",
+#                enb_machine,
+#                oai_user,
+#                oai_password,
+#                envcomp,
+#                logdir + "/compile_softmodem." + enb_machine)
+#    ret = task.wait()
+#    if ret != 0:
+#        log("ERROR: softmodem compilation failure");
+#        os._exit(1)
+#
+##    #copy wanted configuration file
+##    quickshell("sshpass -p " + oai_password +
+##               " scp config/enb.band7.tm1.usrpb210.conf " +
+##                     oai_user + "@" + enb_machine + ":/tmp/enb.conf")
+#
+#    #run softmodem
+#    log("INFO: " + id + ": run softmodem")
+#    task_enb = Task("actions/run_enb.bash",
+#                    "run softmodem",
+#                    enb_machine,
+#                    oai_user,
+#                    oai_password,
+#                    env,
+#                    logdir + "/run_softmodem." + enb_machine, event=event)
+#    task_enb.waitlog('got sync')
+#
+#    #start UE
+#    log("INFO: " + id + ": start bandrich UE")
+#    task_ue = Task("actions/start_bandrich.bash",
+#                   "start bandrich UE",
+#                   ue_machine,
+#                   oai_user,
+#                   oai_password,
+#                   env,
+#                   logdir + "/start_bandrich." + ue_machine, event=event)
+#    task_ue.waitlog("local  IP address", event=event)
+#
+#    event.wait()
+#
+#    #at this point one task has died or we have the line in the log
+#    if task_ue.waitlog_state != WAITLOG_SUCCESS:
+#        log("ERROR: " + id + ": bandrich UE did not connect")
+#        os._exit(1)
+#
+#    event.clear()
+#
+#    if (    not task_enb.alive() or
+#            not task_hss.alive() or
+#            not task_ue.alive()):
+#        log("ERROR: " + id + ": eNB or UE tasks died")
+#        os._exit(1)
+#
+#    #get bandrich UE IP
+#    l = open(task_ue.logfile, "r").read()
+#    ue_ip = re.search("local  IP address (.*)\n", l).groups()[0]
+#    log("INFO: " + id + ": bandrich UE IP address: " + ue_ip)
+#
+#    #run traffic
+#    log("INFO: " + id + ": run downlink TCP traffic")
+#
+#    log("INFO: " + id + ":     launch server")
+#    task_traffic_ue = Task("actions/downlink_bandrich.bash",
+#                           "start iperf on bandrich UE as server",
+#                           ue_machine,
+#                           oai_user,
+#                           oai_password,
+#                           env,
+#                           logdir + "/downlink_bandrich." + ue_machine,
+#                           event=event)
+#    task_traffic_ue.waitlog("Server listening on TCP port 5001")
+#
+#    log("INFO: " + id + ":     launch client")
+#    envepc = list(env)
+#    envepc.append("UE_IP=" + ue_ip)
+#    task = Task("actions/downlink_epc.bash",
+#                "start iperf on EPC as client",
+#                epc_machine,
+#                oai_user,
+#                oai_password,
+#                envepc,
+#                logdir + "/downlink_epc." + epc_machine, event=event)
+#    log("INFO: " + id + ":     wait for client (or some error)")
+#
+#    event.wait()
+#    log("DEBUG: event.wait() done")
+#
+#    if (    not task_enb.alive() or
+#            not task_hss.alive() or
+#            not task_ue.alive()):
+#        log("ERROR: unexpected task exited, test failed, kill all")
+#        if task.alive():
+#            task.kill()
+#        if task_enb.alive():
+#            task_enb.kill()
+#        if task_ue.alive():
+#            task_ue.kill()
+#
+#    ret = task.wait()
+#    if ret != 0:
+#        log("ERROR: " + id + ": downlink traffic failed")
+#        #not sure if we have to quit here or not
+#        #os._exit(1)
+#
+#    #stop downlink server
+#    log("INFO: " + id + ":     stop server (kill ssh connection)")
+#    task_traffic_ue.kill()
+#    log("INFO: " + id + ":     wait for server to quit")
+#    task_traffic_ue.wait()
+#
+#    #stop UE
+#    log("INFO: " + id + ": stop bandrich UE")
+#    task_ue.sendnow("%c" % 3)
+#    ret = task_ue.wait()
+#    if ret != 0:
+#        log("ERROR: " + id + ": task bandrich UE failed")
+#        #not sure if we have to quit here or not
+#        #os._exit(1)
+#
+#    #stop softmodem
+#    log("INFO: " + id + ": stop softmodem")
+#    task_enb.sendnow("%c" % 3)
+#    ret = task_enb.wait()
+#    if ret != 0:
+#        log("ERROR: " + id + ": softmodem failed")
+#        #not sure if we have to quit here or not
+#        #os._exit(1)
+#
+#    #stop EPC, wait for disconnection on HSS side
+#    log("INFO: " + id + ": stop EPC")
+#    task = Task("actions/alu_epc_stop.bash",
+#                "ALU EPC stop",
+#                epc_machine,
+#                oai_user,
+#                oai_password,
+#                env,
+#                logdir + "/alu_epc_stop." + epc_machine)
+#    ret = task.wait()
+#    if ret != 0:
+#        log("ERROR: " + id + ": ALU EPC stop failed")
+#        os._exit(1)
+#    task_hss.waitlog('Disconnected\n')
+#
+#    log("INFO: " + id + ": stop HSS")
+#    task_hss.sendnow("exit\n")
+#    ret = task_hss.wait()
+#    if ret != 0:
+#        log("ERROR: " + id + ": ALU HSS failed")
+#        os._exit(1)
 
 import utils
 log(utils.GREEN + "GOODBYE" + utils.RESET)

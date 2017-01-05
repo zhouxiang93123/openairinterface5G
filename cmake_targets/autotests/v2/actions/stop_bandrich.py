@@ -16,10 +16,10 @@ try:
         print "WARNING: 'NO CARRIER' detected, not sure if handled correctly"
 
     #deactivate the modem
-    print "INFO: reset and activate the modem"
+    print "INFO: deactivate the modem"
     modem.send('AT+CFUN=4')
     if modem.wait().ret != True:
-        print "ERROR: failed asking modem for activation"
+        print "ERROR: failed asking modem for deactivation"
         quit(1)
 
 except BaseException, e:
