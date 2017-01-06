@@ -29,7 +29,7 @@ class alu_test:
         self.event = threading.Event()
 
     ##########################################################################
-    # start_epc
+    # finish
     ##########################################################################
     def finish(self):
         #brutally kill tasks still running
@@ -107,17 +107,26 @@ class alu_test:
         envcomp.append('BUILD_ARGUMENTS="' + build_arguments + '"')
         #we don't care about BUILD_OUTPUT but required (TODO: change that)
         envcomp.append('BUILD_OUTPUT=/')
+        logdir = self.logdir + "/compile_log"
+        remote_files = "'/tmp/oai_test_setup/oai/cmake_targets/log/*'"
+        post_action = "mkdir -p "+ logdir + \
+                " && sshpass -p " + self.oai_password + \
+                " scp -r " + self.oai_user + \
+                "@" + self.enb_machine + ":" + remote_files + " " + logdir + \
+                " || true"
         task = Task("actions/compilation.bash",
                 "compile_softmodem",
                 self.enb_machine,
                 self.oai_user,
                 self.oai_password,
                 envcomp,
-                self.logdir + "/compile_softmodem." + self.enb_machine)
+                self.logdir + "/compile_softmodem." + self.enb_machine,
+                post_action=post_action)
         ret = task.wait()
         if ret != 0:
             log("ERROR: softmodem compilation failure");
             raise TestFailed()
+        task.postaction()
 
     ##########################################################################
     # start_enb
@@ -203,33 +212,40 @@ class alu_test:
     ##########################################################################
     # _do_traffic (internal function, do not call out of the class)
     ##########################################################################
-    def _do_traffic(self, name, server_code, client_code, waitlog,
-                    server_logfile, client_logfile):
+    def _do_traffic(self, name,
+            server_code, server_machine, server_ip,
+            client_code, client_machine,
+            waitlog,
+            server_logfile, client_logfile,
+            udp_bandwidth=None):
         log("INFO: ALU test: run traffic: " + name)
 
         log("INFO: ALU test:     launch server")
-        task_traffic_ue = Task("actions/" + server_code + ".bash",
+        task_traffic_server = Task("actions/" + server_code + ".bash",
                 server_logfile,
-                self.ue_machine,
+                server_machine,
                 self.oai_user,
                 self.oai_password,
                 self.env,
-                self.logdir + "/" + server_logfile + "." + self.ue_machine,
+                self.logdir + "/" + server_logfile + "." + server_machine,
                 event=self.event)
-        task_traffic_ue.waitlog(waitlog)
+        task_traffic_server.waitlog(waitlog)
+
+        env = list(self.env)
+        if udp_bandwidth != None:
+            env.append("UDP_BANDWIDTH=" + udp_bandwidth)
+        env.append("SERVER_IP=" + server_ip)
 
         log("INFO: ALU test:     launch client")
-        envepc = list(self.env)
-        envepc.append("UE_IP=" + self.bandrich_ue_ip)
-        task_traffic_epc = Task("actions/" + client_code + ".bash",
-                cilent_logfile,
-                self.epc_machine,
+        task_traffic_client = Task("actions/" + client_code + ".bash",
+                client_logfile,
+                client_machine,
                 self.oai_user,
                 self.oai_password,
-                envepc,
-                self.logdir + "/" + client_logfile + "." + self.epc_machine,
+                env,
+                self.logdir + "/" + client_logfile + "." + client_machine,
                 event=self.event)
-        log("INFO: ALU test:     wait for downlink to finish (or some error)")
+        log("INFO: ALU test:     wait for client to finish (or some error)")
 
         self.event.wait()
         log("DEBUG: event.wait() done")
@@ -245,19 +261,19 @@ class alu_test:
             if self.task_ue.alive():
                 self.task_ue.kill()
 
-        ret = task_traffic_epc.wait()
+        ret = task_traffic_client.wait()
         if ret != 0:
             log("ERROR: ALU test: downlink traffic failed")
             #not sure if we have to quit here or not
             #os._exit(1)
 
-        #stop downlink server on UE machine
+        #stop downlink server
         #log("INFO: ALU test:     stop server (kill ssh connection)")
-        #task_traffic_ue.kill()
+        #task_traffic_server.kill()
         log("INFO: ALU test:     stop server (ctrl+z then kill -9 %1)")
-        task_traffic_ue.sendnow("%ckill -9 %%1 || true\n" % 26)
+        task_traffic_server.sendnow("%ckill -9 %%1 || true\n" % 26)
         log("INFO: ALU test:     wait for server to quit")
-        task_traffic_ue.wait()
+        task_traffic_server.wait()
 
         self.event.clear()
 
@@ -271,25 +287,63 @@ class alu_test:
     # dl_tcp
     ##########################################################################
     def dl_tcp(self):
-        self._do_traffic("downlink TCP",
-                         "downlink_bandrich_tcp",
-                         "downlink_epc_tcp",
+        self._do_traffic("bandrich downlink TCP",
+                         "server_tcp", self.ue_machine, self.bandrich_ue_ip,
+                         "client_tcp", self.epc_machine,
                          "Server listening on TCP port 5001",
                          "bandrich_downlink_tcp_server",
                          "bandrich_downlink_tcp_client")
+
+    ##########################################################################
+    # ul_tcp
+    ##########################################################################
+    def ul_tcp(self):
+        self._do_traffic("bandrich uplink TCP",
+                         "server_tcp", self.epc_machine, "192.172.0.1",
+                         "client_tcp", self.ue_machine,
+                         "Server listening on TCP port 5001",
+                         "bandrich_uplink_tcp_server",
+                         "bandrich_uplink_tcp_client")
+
+    ##########################################################################
+    # dl_udp
+    ##########################################################################
+    def dl_udp(self, bandwidth):
+        self._do_traffic("bandrich downlink UDP",
+                         "server_udp", self.ue_machine, self.bandrich_ue_ip,
+                         "client_udp", self.epc_machine,
+                         "Server listening on UDP port 5001",
+                         "bandrich_downlink_udp_server",
+                         "bandrich_downlink_udp_client",
+                         udp_bandwidth=bandwidth)
+
+    ##########################################################################
+    # ul_udp
+    ##########################################################################
+    def ul_udp(self, bandwidth):
+        self._do_traffic("bandrich uplink UDP",
+                         "server_udp", self.epc_machine, "192.172.0.1",
+                         "client_udp", self.ue_machine,
+                         "Server listening on UDP port 5001",
+                         "bandrich_uplink_udp_server",
+                         "bandrich_uplink_udp_client",
+                         udp_bandwidth=bandwidth)
 
 ##############################################################################
 # run_b210_alu
 ##############################################################################
 
 def run_b210_alu(tests, openair_dir, oai_user, oai_password, env):
+    if not do_tests(tests['b210']['alu']):
+        return
+
+    #compile eNB
+
     alu = alu_test(epc='amerique', enb='hutch', ue='stevens',
                    openair=openair_dir,
                    user=oai_user, password=oai_password,
-                   log_subdir='b210_alu_compile_enb',
+                   log_subdir='enb_tests/b210_alu/compile_enb',
                    env=env)
-
-    #compile eNB
 
     try:
         alu.compile_enb("--eNB -w USRP -x -c --disable-cpu-affinity")
@@ -299,21 +353,34 @@ def run_b210_alu(tests, openair_dir, oai_user, oai_password, env):
 
     #run tests
 
+    udp_dl_bandwidth = { "5"  : "15M",
+                         "10" : "30M",
+                         "20" : "60M" }
+
+    udp_ul_bandwidth = { "5"  : "7M",
+                         "10" : "15M",
+                         "20" : "15M" }
+
     for bw in ('5', '10', '20'):
         if do_tests(tests['b210']['alu'][bw]):
+            log("INFO: ALU test: run tests for bandwidth " + bw + " MHz")
             ctest = tests['b210']['alu'][bw]
             alu = alu_test(epc='amerique', enb='hutch', ue='stevens',
                            openair=openair_dir,
                            user=oai_user, password=oai_password,
-                           log_subdir='b210_alu_' + bw,
+                           log_subdir='enb_tests/b210_alu/' + bw,
                            env=env)
             try:
                 alu.start_epc()
                 alu.start_enb("enb.band7.tm1.usrpb210." + bw + "MHz.conf")
                 if do_tests(ctest['bandrich']):
                     alu.start_bandrich_ue()
-                    if do_tests(ctest['bandrich']['tcp']['dl']):
-                        alu.dl_tcp()
+                    if do_tests(ctest['bandrich']['tcp']['dl']): alu.dl_tcp()
+                    if do_tests(ctest['bandrich']['tcp']['ul']): alu.ul_tcp()
+                    if do_tests(ctest['bandrich']['udp']['dl']):
+                        alu.dl_udp(udp_dl_bandwidth[bw])
+                    if do_tests(ctest['bandrich']['udp']['ul']):
+                        alu.ul_udp(udp_ul_bandwidth[bw])
                     alu.stop_bandrich_ue()
                 alu.stop_enb()
                 alu.stop_epc()

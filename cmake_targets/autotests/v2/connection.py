@@ -1,4 +1,4 @@
-import os, subprocess, time, fcntl, termios, tty, signal
+import os, subprocess, time, fcntl, termios, tty, signal, thread
 
 from utils import log
 
@@ -8,6 +8,7 @@ class connection:
         self.host = host
         self.user = user
         self.password = password
+        self.sendlock = thread.allocate_lock()
 
         try:
             (pid, fd) = os.forkpty()
@@ -72,6 +73,8 @@ class connection:
             self.retcode = out
             return -1
 
+        self.sendlock.acquire()
+
         length = len(string)
         while length != 0:
             try:
@@ -88,6 +91,8 @@ class connection:
 
             length = length - ret
             string = string[ret:]
+
+        self.sendlock.release()
 
         return 0
 

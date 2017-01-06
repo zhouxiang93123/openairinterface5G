@@ -285,25 +285,25 @@ tests = {
     'alu' : {
       '5' : {
         'bandrich' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }},
         'sony' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }}},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }}},
       '10' : {
         'bandrich' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }},
         'sony' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }}},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }}},
       '20' : {
         'bandrich' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }},
         'sony' : {
-          'tcp' : { 'up': False, 'down' : False },
-          'udp' : { 'up': False, 'down' : False }}}},
+          'tcp' : { 'ul': False, 'dl' : False },
+          'udp' : { 'ul': False, 'dl' : False }}}},
     'openair-cn' : {}
   },
   'x310' : {
