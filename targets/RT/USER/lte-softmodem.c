@@ -1371,143 +1371,157 @@ void init_openair0() {
 
 int main( int argc, char **argv )
 {
-  int i,j,k,aa,re;
+      int i,j,k,aa,re;
 #if defined (XFORMS)
-  void *status;
+      void *status;
 #endif
 
-  int CC_id;
-  uint8_t  abstraction_flag=0;
-  uint8_t beta_ACK=0,beta_RI=0,beta_CQI=2;
-
+      int CC_id;
+      uint8_t  abstraction_flag=0;
+      uint8_t beta_ACK=0,beta_RI=0,beta_CQI=2;
+      int eMBMS_active=0;
 #if defined (XFORMS)
-  int ret;
+      int ret;
 #endif
 
 #ifdef DEBUG_CONSOLE
-  setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stderr, NULL, _IONBF, 0);
+      setvbuf(stdout, NULL, _IONBF, 0);
+      setvbuf(stderr, NULL, _IONBF, 0);
 #endif
 
-  PHY_VARS_UE *UE[MAX_NUM_CCs];
+      PHY_VARS_UE *UE[MAX_NUM_CCs];
 
-  mode = normal_txrx;
-  memset(&openair0_cfg[0],0,sizeof(openair0_config_t)*MAX_CARDS);
+      mode = normal_txrx;
+      memset(&openair0_cfg[0],0,sizeof(openair0_config_t)*MAX_CARDS);
 
-  memset(tx_max_power,0,sizeof(int)*MAX_NUM_CCs);
-  set_latency_target();
+      memset(tx_max_power,0,sizeof(int)*MAX_NUM_CCs);
+      set_latency_target();
 
-  // set default parameters
-  set_default_frame_parms(frame_parms);
+      // set default parameters
+      set_default_frame_parms(frame_parms);
 
-  // initialize logging
-  logInit();
+      // initialize logging
+      logInit();
 
-  // get options and fill parameters from configuration file
-  get_options (argc, argv); //Command-line options, enb_properties
+      // get options and fill parameters from configuration file
+      get_options (argc, argv); //Command-line options, enb_properties
 
 
  
 
   
 #if T_TRACER
-  T_init(T_port, T_wait, T_dont_fork);
+      T_init(T_port, T_wait, T_dont_fork);
 #endif
 
   // initialize the log (see log.h for details)
-  set_glog(glog_level, glog_verbosity);
+      set_glog(glog_level, glog_verbosity);
 
   //randominit (0);
-  set_taus_seed (0);
+      set_taus_seed (0);
 
-  if (UE_flag==1) {
-    printf("configuring for UE\n");
+      if (UE_flag==1) {
 
-    set_comp_log(HW,      LOG_DEBUG,  LOG_HIGH, 1);
-    set_comp_log(PHY,     LOG_DEBUG,   LOG_HIGH, 1);
-    set_comp_log(MAC,     LOG_INFO,   LOG_HIGH, 1);
-    set_comp_log(RLC,     LOG_INFO,   LOG_HIGH, 1);
-    set_comp_log(PDCP,    LOG_INFO,   LOG_HIGH, 1);
-    set_comp_log(OTG,     LOG_INFO,   LOG_HIGH, 1);
-    set_comp_log(RRC,     LOG_INFO,   LOG_HIGH, 1);
+              printf("configuring for UE\n");
+
+              set_comp_log(HW,      LOG_DEBUG,  LOG_HIGH, 1);
+              set_comp_log(PHY,     LOG_DEBUG,   LOG_HIGH, 1);
+              set_comp_log(MAC,     LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(RLC,     LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(PDCP,    LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(OTG,     LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(RRC,     LOG_INFO,   LOG_HIGH, 1);
 #if defined(ENABLE_ITTI)
-    set_comp_log(EMU,     LOG_INFO,   LOG_MED, 1);
+              set_comp_log(EMU,     LOG_INFO,   LOG_MED, 1);
 # if defined(ENABLE_USE_MME)
-    set_comp_log(NAS,     LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(NAS,     LOG_INFO,   LOG_HIGH, 1);
 # endif
 #endif
-  } else {
-    printf("configuring for eNB\n");
+  } 
 
-    set_comp_log(HW,      hw_log_level, hw_log_verbosity, 1);
-    set_comp_log(PHY,     phy_log_level,   phy_log_verbosity, 1);
-    if (opt_enabled == 1 )
-      set_comp_log(OPT,   opt_log_level,      opt_log_verbosity, 1);
-    set_comp_log(MAC,     mac_log_level,  mac_log_verbosity, 1);
-    set_comp_log(RLC,     rlc_log_level,   rlc_log_verbosity, 1);
-    set_comp_log(PDCP,    pdcp_log_level,  pdcp_log_verbosity, 1);
-    set_comp_log(RRC,     rrc_log_level,  rrc_log_verbosity, 1);
+  else {
+
+              printf("configuring for eNB\n");
+
+              set_comp_log(HW,      hw_log_level, hw_log_verbosity, 1);
+              set_comp_log(PHY,     phy_log_level,   phy_log_verbosity, 1);
+              if (opt_enabled == 1 )
+                set_comp_log(OPT,   opt_log_level,      opt_log_verbosity, 1);
+              set_comp_log(MAC,     mac_log_level,  mac_log_verbosity, 1);
+              set_comp_log(RLC,     rlc_log_level,   rlc_log_verbosity, 1);
+              set_comp_log(PDCP,    pdcp_log_level,  pdcp_log_verbosity, 1);
+              set_comp_log(RRC,     rrc_log_level,  rrc_log_verbosity, 1);
 #if defined(ENABLE_ITTI)
-    set_comp_log(EMU,     LOG_INFO,   LOG_MED, 1);
+              set_comp_log(EMU,     LOG_INFO,   LOG_MED, 1);
 # if defined(ENABLE_USE_MME)
-    set_comp_log(UDP_,    udp_log_level,   udp_log_verbosity, 1);
-    set_comp_log(GTPU,    gtpu_log_level,   gtpu_log_verbosity, 1);
-    set_comp_log(S1AP,    LOG_DEBUG,   LOG_HIGH, 1);
-    set_comp_log(SCTP,    LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(UDP_,    udp_log_level,   udp_log_verbosity, 1);
+              set_comp_log(GTPU,    gtpu_log_level,   gtpu_log_verbosity, 1);
+              set_comp_log(S1AP,    LOG_DEBUG,   LOG_HIGH, 1);
+              set_comp_log(SCTP,    LOG_INFO,   LOG_HIGH, 1);
 # endif
 #if defined(ENABLE_SECURITY)
-    set_comp_log(OSA,    osa_log_level,   osa_log_verbosity, 1);
+              set_comp_log(OSA,    osa_log_level,   osa_log_verbosity, 1);
 #endif
 #endif
 #ifdef LOCALIZATION
-    set_comp_log(LOCALIZE, LOG_DEBUG, LOG_LOW, 1);
-    set_component_filelog(LOCALIZE);
+              set_comp_log(LOCALIZE, LOG_DEBUG, LOG_LOW, 1);
+              set_component_filelog(LOCALIZE);
 #endif
-    set_comp_log(ENB_APP, LOG_INFO, LOG_HIGH, 1);
-    set_comp_log(OTG,     LOG_INFO,   LOG_HIGH, 1);
+              set_comp_log(ENB_APP, LOG_INFO, LOG_HIGH, 1);
+              set_comp_log(OTG,     LOG_INFO,   LOG_HIGH, 1);
 
-    if (online_log_messages == 1) {
-      set_component_filelog(RRC);
-      set_component_filelog(PDCP);
-    }
+              if (online_log_messages == 1) {
+                set_component_filelog(RRC);
+                set_component_filelog(PDCP);
+              }
   }
 
   if (ouput_vcd) {
-    if (UE_flag==1)
-      VCD_SIGNAL_DUMPER_INIT("/tmp/openair_dump_UE.vcd");
-    else
-      VCD_SIGNAL_DUMPER_INIT("/tmp/openair_dump_eNB.vcd");
+
+            if (UE_flag==1)
+              VCD_SIGNAL_DUMPER_INIT("/tmp/openair_dump_UE.vcd");
+            else
+              VCD_SIGNAL_DUMPER_INIT("/tmp/openair_dump_eNB.vcd");
   }
 
   if (opp_enabled ==1){
-    reset_opp_meas();
+
+            reset_opp_meas();
   }
-  cpuf=get_cpu_freq_GHz();
+
+            cpuf=get_cpu_freq_GHz();
 
 #if defined(ENABLE_ITTI)
 
   if (UE_flag == 1) {
-    log_set_instance_type (LOG_INSTANCE_UE);
+
+            log_set_instance_type (LOG_INSTANCE_UE);
+
   } else {
-    log_set_instance_type (LOG_INSTANCE_ENB);
+
+            log_set_instance_type (LOG_INSTANCE_ENB);
+
   }
 
-  itti_init(TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, itti_dump_file);
+            itti_init(TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info,
+                      messages_info, messages_definition_xml, itti_dump_file);
  
   // initialize mscgen log after ITTI
   MSC_INIT(MSC_E_UTRAN, THREAD_MAX+TASK_MAX);
+
 #endif
  
   if (opt_type != OPT_NONE) {
-    radio_type_t radio_type;
 
-    if (frame_parms[0]->frame_type == FDD)
-      radio_type = RADIO_TYPE_FDD;
-    else
-      radio_type = RADIO_TYPE_TDD;
+            radio_type_t radio_type;
 
-    if (init_opt(in_path, in_ip, NULL, radio_type) == -1)
-      LOG_E(OPT,"failed to run OPT \n");
+            if (frame_parms[0]->frame_type == FDD)
+              radio_type = RADIO_TYPE_FDD;
+            else
+              radio_type = RADIO_TYPE_TDD;
+
+            if (init_opt(in_path, in_ip, NULL, radio_type) == -1)
+              LOG_E(OPT,"failed to run OPT \n");
   }
 
 #ifdef PDCP_USE_NETLINK
@@ -1529,137 +1543,165 @@ int main( int argc, char **argv )
   // init the parameters
   for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
 
-    if (UE_flag==1) {
-      frame_parms[CC_id]->nb_antennas_tx     = 1;
-      frame_parms[CC_id]->nb_antennas_rx     = 1;
-      frame_parms[CC_id]->nb_antenna_ports_eNB = 1; //initial value overwritten by initial sync later
-    }
+          if (UE_flag==1) {
 
-    init_ul_hopping(frame_parms[CC_id]);
-    init_frame_parms(frame_parms[CC_id],1);
-    //   phy_init_top(frame_parms[CC_id]);
-    phy_init_lte_top(frame_parms[CC_id]);
+                  frame_parms[CC_id]->nb_antennas_tx     = 1;
+                  frame_parms[CC_id]->nb_antennas_rx     = 1;
+                  frame_parms[CC_id]->nb_antenna_ports_eNB = 1; //initial value overwritten by initial sync later
+          }
+
+          init_ul_hopping(frame_parms[CC_id]);
+          init_frame_parms(frame_parms[CC_id],1);
+          //   phy_init_top(frame_parms[CC_id]);
+          phy_init_lte_top(frame_parms[CC_id]);
   }
 
 
-  for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+  // for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
     //init prach for openair1 test
 
     // prach_fmt = get_prach_fmt(frame_parms->prach_config_common.prach_ConfigInfo.prach_ConfigIndex, frame_parms->frame_type);
     // N_ZC = (prach_fmt <4)?839:139;
-  }
+  // }
 
-  if (UE_flag==1) {
-    NB_UE_INST=1;
-    NB_INST=1;
+  if (UE_flag==1) { // UE Stuff
 
-    PHY_vars_UE_g = malloc(sizeof(PHY_VARS_UE**));
-    PHY_vars_UE_g[0] = malloc(sizeof(PHY_VARS_UE*)*MAX_NUM_CCs);
+            NB_UE_INST=1;
+            NB_INST=1;
 
-    for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+            PHY_vars_UE_g = malloc(sizeof(PHY_VARS_UE**));
+            PHY_vars_UE_g[0] = malloc(sizeof(PHY_VARS_UE*)*MAX_NUM_CCs);
 
-      PHY_vars_UE_g[0][CC_id] = init_lte_UE(frame_parms[CC_id], 0,abstraction_flag);
-      UE[CC_id] = PHY_vars_UE_g[0][CC_id];
-      printf("PHY_vars_UE_g[0][%d] = %p\n",CC_id,UE[CC_id]);
+            for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
 
-      if (phy_test==1)
-	UE[CC_id]->mac_enabled = 0;
-      else 
-	UE[CC_id]->mac_enabled = 1;
+                      PHY_vars_UE_g[0][CC_id] = init_lte_UE(frame_parms[CC_id], 0,abstraction_flag);
+                      UE[CC_id] = PHY_vars_UE_g[0][CC_id];
+                      printf("PHY_vars_UE_g[0][%d] = %p\n",CC_id,UE[CC_id]);
 
-      if (UE[CC_id]->mac_enabled == 0) {  //set default UL parameters for testing mode
-	for (i=0; i<NUMBER_OF_CONNECTED_eNB_MAX; i++) {
-	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_ACK_Index = beta_ACK;
-	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_RI_Index  = beta_RI;
-	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_CQI_Index = beta_CQI;
-	  
-	  UE[CC_id]->scheduling_request_config[i].sr_PUCCH_ResourceIndex = 0;
-	  UE[CC_id]->scheduling_request_config[i].sr_ConfigIndex = 7+(0%3);
-	  UE[CC_id]->scheduling_request_config[i].dsr_TransMax = sr_n4;
-	}
-      }
+                      if (phy_test==1)
+                          	UE[CC_id]->mac_enabled = 0;
+                      else 
+                          	UE[CC_id]->mac_enabled = 1;
 
-      UE[CC_id]->UE_scan = UE_scan;
-      UE[CC_id]->UE_scan_carrier = UE_scan_carrier;
-      UE[CC_id]->mode    = mode;
-      printf("UE[%d]->mode = %d\n",CC_id,mode);
+                      if (UE[CC_id]->mac_enabled == 0) {  //set default UL parameters for testing mode
 
-      compute_prach_seq(&UE[CC_id]->frame_parms.prach_config_common,
-                        UE[CC_id]->frame_parms.frame_type,
-                        UE[CC_id]->X_u);
+                            	for (i=0; i<NUMBER_OF_CONNECTED_eNB_MAX; i++) {
 
-      if (UE[CC_id]->mac_enabled == 1) 
-	UE[CC_id]->pdcch_vars[0]->crnti = 0x1234;
-      else
-	UE[CC_id]->pdcch_vars[0]->crnti = 0x1235;
+                                    	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_ACK_Index = beta_ACK;
+                                    	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_RI_Index  = beta_RI;
+                                    	  UE[CC_id]->pusch_config_dedicated[i].betaOffset_CQI_Index = beta_CQI;
+                                    	  
+                                    	  UE[CC_id]->scheduling_request_config[i].sr_PUCCH_ResourceIndex = 0;
+                                    	  UE[CC_id]->scheduling_request_config[i].sr_ConfigIndex = 7+(0%3);
+                                    	  UE[CC_id]->scheduling_request_config[i].dsr_TransMax = sr_n4;
+                            	}
+                      }
 
-      UE[CC_id]->rx_total_gain_dB =  (int)rx_gain[CC_id][0] + rx_gain_off;
-      UE[CC_id]->tx_power_max_dBm = tx_max_power[CC_id];
-      
-      if (frame_parms[CC_id]->frame_type==FDD) {
-	UE[CC_id]->N_TA_offset = 0;
-      }
-      else {
-	if (frame_parms[CC_id]->N_RB_DL == 100)
-	  UE[CC_id]->N_TA_offset = 624;
-	else if (frame_parms[CC_id]->N_RB_DL == 50)
-	  UE[CC_id]->N_TA_offset = 624/2;
-	else if (frame_parms[CC_id]->N_RB_DL == 25)
-	  UE[CC_id]->N_TA_offset = 624/4;
-      }
+                      UE[CC_id]->UE_scan = UE_scan;
+                      UE[CC_id]->UE_scan_carrier = UE_scan_carrier;
+                      UE[CC_id]->mode    = mode;
+                      printf("UE[%d]->mode = %d\n",CC_id,mode);
 
-    }
+                      compute_prach_seq(&UE[CC_id]->frame_parms.prach_config_common,
+                                        UE[CC_id]->frame_parms.frame_type,
+                                        UE[CC_id]->X_u);
 
-    //  printf("tx_max_power = %d -> amp %d\n",tx_max_power,get_tx_amp(tx_max_poHwer,tx_max_power));
-  } else {
-    //this is eNB
-    PHY_vars_eNB_g = malloc(sizeof(PHY_VARS_eNB**));
-    PHY_vars_eNB_g[0] = malloc(sizeof(PHY_VARS_eNB*));
+                      if (UE[CC_id]->mac_enabled == 1) 
 
-    for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      PHY_vars_eNB_g[0][CC_id] = init_lte_eNB(frame_parms[CC_id],0,frame_parms[CC_id]->Nid_cell,abstraction_flag);
-      PHY_vars_eNB_g[0][CC_id]->CC_id = CC_id;
+                          	UE[CC_id]->pdcch_vars[0]->crnti = 0x1234;
+                      else
 
-      PHY_vars_eNB_g[0][CC_id]->ue_dl_rb_alloc=0x1fff;
-      PHY_vars_eNB_g[0][CC_id]->target_ue_dl_mcs=target_dl_mcs;
-      PHY_vars_eNB_g[0][CC_id]->ue_ul_nb_rb=6;
-      PHY_vars_eNB_g[0][CC_id]->target_ue_ul_mcs=target_ul_mcs;
+                          	UE[CC_id]->pdcch_vars[0]->crnti = 0x1235;
 
-      // initialization for phy-test
-      for (k=0;k<NUMBER_OF_UE_MAX;k++) {
-	PHY_vars_eNB_g[0][CC_id]->transmission_mode[k] = transmission_mode;
-	if (transmission_mode==7) 
-	  lte_gold_ue_spec_port5(PHY_vars_eNB_g[0][CC_id]->lte_gold_uespec_port5_table[k],frame_parms[CC_id]->Nid_cell,0x1235+k);
-      }
-      if ((transmission_mode==1) || (transmission_mode==7)) {
-	  for (j=0; j<frame_parms[CC_id]->nb_antennas_tx; j++) 
-	    for (re=0; re<frame_parms[CC_id]->ofdm_symbol_size; re++) 
-	      PHY_vars_eNB_g[0][CC_id]->common_vars.beam_weights[0][0][j][re] = 0x00007fff/frame_parms[CC_id]->nb_antennas_tx; 
-      }
-      if (phy_test==1) PHY_vars_eNB_g[0][CC_id]->mac_enabled = 0;
-      else PHY_vars_eNB_g[0][CC_id]->mac_enabled = 1;
+                      UE[CC_id]->rx_total_gain_dB =  (int)rx_gain[CC_id][0] + rx_gain_off;
+                      UE[CC_id]->tx_power_max_dBm = tx_max_power[CC_id];
+                      
+                      if (frame_parms[CC_id]->frame_type==FDD) {
 
-      if (PHY_vars_eNB_g[0][CC_id]->mac_enabled == 0) { //set default parameters for testing mode
-	for (i=0; i<NUMBER_OF_UE_MAX; i++) {
-	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_ACK_Index = beta_ACK;
-	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_RI_Index  = beta_RI;
-	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_CQI_Index = beta_CQI;
-	  
-	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].sr_PUCCH_ResourceIndex = i;
-	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].sr_ConfigIndex = 7+(i%3);
-	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].dsr_TransMax = sr_n4;
-	}
-      }
+                          	UE[CC_id]->N_TA_offset = 0;
+                      }
 
-      compute_prach_seq(&PHY_vars_eNB_g[0][CC_id]->frame_parms.prach_config_common,
-                        PHY_vars_eNB_g[0][CC_id]->frame_parms.frame_type,
-                        PHY_vars_eNB_g[0][CC_id]->X_u);
+                     else {
 
-      PHY_vars_eNB_g[0][CC_id]->rx_total_gain_dB = (int)rx_gain[CC_id][0];
+                    	if (frame_parms[CC_id]->N_RB_DL == 100)
 
-      PHY_vars_eNB_g[0][CC_id]->N_TA_offset = 0;
+                        	  UE[CC_id]->N_TA_offset = 624;
 
-    }
+                    	else if (frame_parms[CC_id]->N_RB_DL == 50)
+
+                        	  UE[CC_id]->N_TA_offset = 624/2;
+
+                    	else if (frame_parms[CC_id]->N_RB_DL == 25)
+
+                        	  UE[CC_id]->N_TA_offset = 624/4;
+
+                    }
+
+            }
+
+    
+  } else { //  eNB Stuff
+              
+            PHY_vars_eNB_g = malloc(sizeof(PHY_VARS_eNB**));
+            PHY_vars_eNB_g[0] = malloc(sizeof(PHY_VARS_eNB*));
+
+            for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+
+                        PHY_vars_eNB_g[0][CC_id] = init_lte_eNB(frame_parms[CC_id],0,frame_parms[CC_id]->Nid_cell,
+                                                                 abstraction_flag);
+                        PHY_vars_eNB_g[0][CC_id]->CC_id = CC_id;
+
+                        PHY_vars_eNB_g[0][CC_id]->ue_dl_rb_alloc=0x1fff;
+                        PHY_vars_eNB_g[0][CC_id]->target_ue_dl_mcs=target_dl_mcs;
+                        PHY_vars_eNB_g[0][CC_id]->ue_ul_nb_rb=6;
+                        PHY_vars_eNB_g[0][CC_id]->target_ue_ul_mcs=target_ul_mcs;
+
+                        // initialization for phy-test
+                        for (k=0;k<NUMBER_OF_UE_MAX;k++) {
+
+                            	PHY_vars_eNB_g[0][CC_id]->transmission_mode[k] = transmission_mode;
+                            	if (transmission_mode==7) 
+
+                            	  lte_gold_ue_spec_port5(PHY_vars_eNB_g[0][CC_id]->lte_gold_uespec_port5_table[k],
+                                                       frame_parms[CC_id]->Nid_cell,0x1235+k);
+
+                          }
+                          if ((transmission_mode==1) || (transmission_mode==7)) {
+
+                            	  for (j=0; j<frame_parms[CC_id]->nb_antennas_tx; j++) 
+
+                            	    for (re=0; re<frame_parms[CC_id]->ofdm_symbol_size; re++) 
+
+                                	      PHY_vars_eNB_g[0][CC_id]->common_vars.beam_weights[0][0][j][re] = 0x00007fff/frame_parms[CC_id]->nb_antennas_tx; 
+
+                          }
+
+                          if (phy_test==1) PHY_vars_eNB_g[0][CC_id]->mac_enabled = 0;
+                          else PHY_vars_eNB_g[0][CC_id]->mac_enabled = 1;
+
+                          if (PHY_vars_eNB_g[0][CC_id]->mac_enabled == 0) { //set default parameters for testing mode
+
+                              	for (i=0; i<NUMBER_OF_UE_MAX; i++) {
+
+                                    	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_ACK_Index = beta_ACK;
+                                    	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_RI_Index  = beta_RI;
+                                    	  PHY_vars_eNB_g[0][CC_id]->pusch_config_dedicated[i].betaOffset_CQI_Index = beta_CQI;
+                                    	  
+                                    	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].sr_PUCCH_ResourceIndex = i;
+                                    	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].sr_ConfigIndex = 7+(i%3);
+                                    	  PHY_vars_eNB_g[0][CC_id]->scheduling_request_config[i].dsr_TransMax = sr_n4;
+                              	}
+                }
+
+                compute_prach_seq(&PHY_vars_eNB_g[0][CC_id]->frame_parms.prach_config_common,
+                                  PHY_vars_eNB_g[0][CC_id]->frame_parms.frame_type,
+                                  PHY_vars_eNB_g[0][CC_id]->X_u);
+
+                PHY_vars_eNB_g[0][CC_id]->rx_total_gain_dB = (int)rx_gain[CC_id][0];
+
+                PHY_vars_eNB_g[0][CC_id]->N_TA_offset = 0;
+
+            }
 
 
     NB_eNB_INST=1;
@@ -1668,7 +1710,7 @@ int main( int argc, char **argv )
   }
 
   fill_modeled_runtime_table(runtime_phy_rx,runtime_phy_tx);
-  cpuf=get_cpu_freq_GHz();
+  cpuf = get_cpu_freq_GHz();
 
 
   dump_frame_parms(frame_parms[0]);
@@ -1685,55 +1727,69 @@ int main( int argc, char **argv )
   int s;
   char cpu_affinity[1024];
   CPU_ZERO(&cpuset);
+
 #ifdef CPU_AFFINITY
   if (get_nprocs() > 2)
+
     {
-      CPU_SET(0, &cpuset);
-      s = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-      if (s != 0)
-	{
-	  perror( "pthread_setaffinity_np");
-	  exit_fun("Error setting processor affinity");
-	}
-      LOG_I(HW, "Setting the affinity of main function to CPU 0, for device library to use CPU 0 only!\n");
+
+              CPU_SET(0, &cpuset);
+              s = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+              if (s != 0)
+        	    {
+              	  perror( "pthread_setaffinity_np");
+              	  exit_fun("Error setting processor affinity");
+        	     }
+
+              LOG_I(HW, "Setting the affinity of main function to CPU 0, for device library to use CPU 0 only!\n");
     }
 #endif
 
   /* Check the actual affinity mask assigned to the thread */
   s = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
   if (s != 0)
     {
       perror( "pthread_getaffinity_np");
       exit_fun("Error getting processor affinity ");
     }
+
   memset(cpu_affinity, 0 , sizeof(cpu_affinity));
+
   for (int j = 0; j < CPU_SETSIZE; j++)
     {
-      if (CPU_ISSET(j, &cpuset))
-	{  
-	  char temp[1024];
-	  sprintf(temp, " CPU_%d ", j);    
-	  strcat(cpu_affinity, temp);
-	}
+            if (CPU_ISSET(j, &cpuset))
+           	{  
+              	  char temp[1024];
+              	  sprintf(temp, " CPU_%d ", j);    
+              	  strcat(cpu_affinity, temp);
+      	    }
     }
   LOG_I(HW, "CPU Affinity of main() function is... %s\n", cpu_affinity);
 #endif
   
   openair0_cfg[0].log_level = glog_level;
 
+  /* ------------------------------------------
+   * l2_init MACPHY
+   *  ------------------------------------------
+   */
   
-
-
-  int eMBMS_active=0;
   if (node_function[0] <= NGFI_RAU_IF4p5) { // don't initialize L2 for RRU
-    LOG_I(PHY,"Intializing L2\n");
-    mac_xface = malloc(sizeof(MAC_xface));  
-    l2_init(frame_parms[0],eMBMS_active,(uecap_xer_in==1)?uecap_xer:NULL,
-	    0,// cba_group_active
-	    0); // HO flag
-    mac_xface->macphy_exit = &exit_fun;
+
+          LOG_I(PHY,"Intializing L2\n");
+
+          mac_xface = malloc(sizeof(MAC_xface));  
+
+          l2_init(frame_parms[0],eMBMS_active,(uecap_xer_in==1)?uecap_xer:NULL,
+      	    0,// cba_group_active
+      	    0); // HO flag
+
+          mac_xface->macphy_exit = &exit_fun;
   }
-  else if (node_function[0] == NGFI_RRU_IF4p5) { // Initialize PRACH in this case
+
+          else if (node_function[0] == NGFI_RRU_IF4p5) { // Initialize PRACH in this case
 
   }
 
@@ -1744,21 +1800,30 @@ int main( int argc, char **argv )
   if ((UE_flag == 1)||
       (node_function[0]<NGFI_RAU_IF4p5))
     // don't create if node doesn't connect to RRC/S1/GTP
-    if (create_tasks(UE_flag ? 0 : 1, UE_flag ? 1 : 0) < 0) {
-      printf("cannot create ITTI tasks\n");
-      exit(-1); // need a softer mode
-    }
+
+          if (create_tasks(UE_flag ? 0 : 1, UE_flag ? 1 : 0) < 0) 
+           {
+
+                  printf("cannot create ITTI tasks\n");
+                  exit(-1); // need a softer mode
+
+           }
 
   printf("ITTI tasks created\n");
 #endif
 
   if (phy_test==0) {
-    if (UE_flag==1) {
-      printf("Filling UE band info\n");
-      fill_ue_band_info();
-      mac_xface->dl_phy_sync_success (0, 0, 0, 1);
-    } else if (node_function[0]>NGFI_RRU_IF4p5)
-      mac_xface->mrbch_phy_sync_failure (0, 0, 0);
+
+          if (UE_flag==1) {
+
+                  printf("Filling UE band info\n");
+                  fill_ue_band_info();
+                  mac_xface->dl_phy_sync_success (0, 0, 0, 1);
+
+          } 
+
+          else if (node_function[0]>NGFI_RRU_IF4p5)
+            mac_xface->mrbch_phy_sync_failure (0, 0, 0);
   }
 
 
@@ -1772,128 +1837,156 @@ int main( int argc, char **argv )
   int UE_id;
 
   if (do_forms==1) {
-    fl_initialize (&argc, argv, NULL, 0, 0);
 
-    if (UE_flag==0) {
-      form_stats_l2 = create_form_stats_form();
-      fl_show_form (form_stats_l2->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "l2 stats");
-      form_stats = create_form_stats_form();
-      fl_show_form (form_stats->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "stats");
+            fl_initialize (&argc, argv, NULL, 0, 0);
 
-      for(UE_id=0; UE_id<scope_enb_num_ue; UE_id++) {
-	for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-	  form_enb[CC_id][UE_id] = create_lte_phy_scope_enb();
-	  sprintf (title, "LTE UL SCOPE eNB for CC_id %d, UE %d",CC_id,UE_id);
-	  fl_show_form (form_enb[CC_id][UE_id]->lte_phy_scope_enb, FL_PLACE_HOTSPOT, FL_FULLBORDER, title);
+            if (UE_flag==0) {
 
-	  if (otg_enabled) {
-	    fl_set_button(form_enb[CC_id][UE_id]->button_0,1);
-	    fl_set_object_label(form_enb[CC_id][UE_id]->button_0,"DL Traffic ON");
-	  } else {
-	    fl_set_button(form_enb[CC_id][UE_id]->button_0,0);
-	    fl_set_object_label(form_enb[CC_id][UE_id]->button_0,"DL Traffic OFF");
-	  }
-	} // CC_id
-      } // UE_id
-    } else {
-      form_stats = create_form_stats_form();
-      fl_show_form (form_stats->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "stats");
-      UE_id = 0;
-      form_ue[UE_id] = create_lte_phy_scope_ue();
-      sprintf (title, "LTE DL SCOPE UE");
-      fl_show_form (form_ue[UE_id]->lte_phy_scope_ue, FL_PLACE_HOTSPOT, FL_FULLBORDER, title);
+                      form_stats_l2 = create_form_stats_form();
+                      fl_show_form (form_stats_l2->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "l2 stats");
 
-      /*
-	if (openair_daq_vars.use_ia_receiver) {
-        fl_set_button(form_ue[UE_id]->button_0,1);
-        fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver ON");
-	} else {
-        fl_set_button(form_ue[UE_id]->button_0,0);
-        fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver OFF");
-	}*/
-      fl_set_button(form_ue[UE_id]->button_0,0);
-      fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver OFF");
-    }
+                      form_stats = create_form_stats_form();
+                      fl_show_form (form_stats->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "stats");
 
-    ret = pthread_create(&forms_thread, NULL, scope_thread, NULL);
+                      for(UE_id = 0; UE_id < scope_enb_num_ue; UE_id++) {
 
-    if (ret == 0)
-      pthread_setname_np( forms_thread, "xforms" );
+                            	for(CC_id = 0; CC_id < MAX_NUM_CCs; CC_id++) {
 
-    printf("Scope thread created, ret=%d\n",ret);
+                                    	  form_enb[CC_id][UE_id] = create_lte_phy_scope_enb();
+                                    	  sprintf (title, "LTE UL SCOPE eNB for CC_id %d, UE %d",CC_id,UE_id);
+
+                                    	  fl_show_form (form_enb[CC_id][UE_id]->lte_phy_scope_enb,
+                                                       FL_PLACE_HOTSPOT, FL_FULLBORDER, title);
+
+                                    	  if (otg_enabled) {
+
+                                        	    fl_set_button(form_enb[CC_id][UE_id]->button_0,1);
+                                        	    fl_set_object_label(form_enb[CC_id][UE_id]->button_0,"DL Traffic ON");
+
+                                    	  } 
+
+                                        else {
+
+                                        	    fl_set_button(form_enb[CC_id][UE_id]->button_0,0);
+                                        	    fl_set_object_label(form_enb[CC_id][UE_id]->button_0,"DL Traffic OFF");
+                                    	  }
+                            	} // CC_id
+                      } // UE_id
+            } 
+
+            else {
+                        form_stats = create_form_stats_form();
+                        fl_show_form (form_stats->stats_form, FL_PLACE_HOTSPOT, FL_FULLBORDER, "stats");
+
+                        UE_id = 0;
+                        form_ue[UE_id] = create_lte_phy_scope_ue();
+                        sprintf (title, "LTE DL SCOPE UE");
+                        fl_show_form (form_ue[UE_id]->lte_phy_scope_ue, FL_PLACE_HOTSPOT, FL_FULLBORDER, title);
+
+                        /*
+                  	if (openair_daq_vars.use_ia_receiver) {
+                          fl_set_button(form_ue[UE_id]->button_0,1);
+                          fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver ON");
+                  	} else {
+                          fl_set_button(form_ue[UE_id]->button_0,0);
+                          fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver OFF");
+                  	}*/
+                        fl_set_button(form_ue[UE_id]->button_0,0);
+                        fl_set_object_label(form_ue[UE_id]->button_0, "IA Receiver OFF");
+            }
+
+            ret = pthread_create(&forms_thread, NULL, scope_thread, NULL);
+
+            if (ret == 0)
+              pthread_setname_np( forms_thread, "xforms" );
+
+            printf("Scope thread created, ret=%d\n",ret);
   }
 
 #endif
 
   rt_sleep_ns(10*100000000ULL);
 
+/* ------------------------------------------
+ * Start the main thread of UE & eNB
+ *  ------------------------------------------
+ */
+  
 
-
-  // start the main thread
+  // start the main thread of UE & Enb
   if (UE_flag == 1) {
-    init_UE(1);
-    number_of_cards = 1;
-    
-    for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      PHY_vars_UE_g[0][CC_id]->rf_map.card=0;
-      PHY_vars_UE_g[0][CC_id]->rf_map.chain=CC_id+chain_offset;
-    }
+
+            init_UE(1);
+            number_of_cards = 1;
+            
+            for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+
+                    PHY_vars_UE_g[0][CC_id]->rf_map.card=0;
+                    PHY_vars_UE_g[0][CC_id]->rf_map.chain=CC_id+chain_offset;
+            }
   }
   else { 
+
     init_eNB(node_function,node_timing,1,eth_params,single_thread_flag);
     // Sleep to allow all threads to setup
     
     number_of_cards = 1;
     
     for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      PHY_vars_eNB_g[0][CC_id]->rf_map.card=0;
-      PHY_vars_eNB_g[0][CC_id]->rf_map.chain=CC_id+chain_offset;
+
+              PHY_vars_eNB_g[0][CC_id]->rf_map.card=0;
+              PHY_vars_eNB_g[0][CC_id]->rf_map.chain=CC_id+chain_offset;
     }
   }
 
   // connect the TX/RX buffers
   if (UE_flag==1) {
 
-    for (CC_id=0;CC_id<MAX_NUM_CCs; CC_id++) {
+            for (CC_id=0;CC_id<MAX_NUM_CCs; CC_id++) {
 
-    
+            
 #ifdef OAI_USRP
-      UE[CC_id]->hw_timing_advance = timing_advance;
+                      UE[CC_id]->hw_timing_advance = timing_advance;
 #else
-      UE[CC_id]->hw_timing_advance = 160;
+                      UE[CC_id]->hw_timing_advance = 160;
 #endif
-    }
-    if (setup_ue_buffers(UE,&openair0_cfg[0])!=0) {
-      printf("Error setting up eNB buffer\n");
-      exit(-1);
-    }
+            }
+
+            if (setup_ue_buffers(UE, &openair0_cfg[0])!=0) {
+
+                      printf("Error setting up eNB buffer\n");
+                      exit(-1);
+            }
 
 
 
-    if (input_fd) {
-      printf("Reading in from file to antenna buffer %d\n",0);
-      if (fread(UE[0]->common_vars.rxdata[0],
-	        sizeof(int32_t),
-	        frame_parms[0]->samples_per_tti*10,
-	        input_fd) != frame_parms[0]->samples_per_tti*10)
-        printf("error reading from file\n");
-    }
+            if (input_fd) {
+
+                      printf("Reading in from file to antenna buffer %d\n",0);
+
+                      if (fread(UE[0]->common_vars.rxdata[0],
+                	        sizeof(int32_t), frame_parms[0]->samples_per_tti*10,
+                	        input_fd) != frame_parms[0]->samples_per_tti*10)
+
+                        printf("error reading from file\n");
+            }
     //p_exmimo_config->framing.tdd_config = TXRXSWITCH_TESTRX;
-  } else {
+  } 
 
+  else {
 
+            printf("Setting eNB buffer to all-RX\n");
 
+            // Set LSBs for antenna switch (ExpressMIMO)
+            for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
 
+                    PHY_vars_eNB_g[0][CC_id]->hw_timing_advance = 0;
+                    for (i=0; i<frame_parms[CC_id]->samples_per_tti*10; i++)
 
-    printf("Setting eNB buffer to all-RX\n");
+                      for (aa=0; aa<frame_parms[CC_id]->nb_antennas_tx; aa++)
 
-    // Set LSBs for antenna switch (ExpressMIMO)
-    for (CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      PHY_vars_eNB_g[0][CC_id]->hw_timing_advance = 0;
-      for (i=0; i<frame_parms[CC_id]->samples_per_tti*10; i++)
-        for (aa=0; aa<frame_parms[CC_id]->nb_antennas_tx; aa++)
-          PHY_vars_eNB_g[0][CC_id]->common_vars.txdata[0][aa][i] = 0x00010001;
-    }
+                        PHY_vars_eNB_g[0][CC_id]->common_vars.txdata[0][aa][i] = 0x00010001;
+            }
   }
   sleep(3);
 
@@ -1925,24 +2018,31 @@ int main( int argc, char **argv )
   printf("waiting for XFORMS thread\n");
 
   if (do_forms==1) {
-    pthread_join(forms_thread,&status);
-    fl_hide_form(form_stats->stats_form);
-    fl_free_form(form_stats->stats_form);
 
-    if (UE_flag==1) {
-      fl_hide_form(form_ue[0]->lte_phy_scope_ue);
-      fl_free_form(form_ue[0]->lte_phy_scope_ue);
-    } else {
-      fl_hide_form(form_stats_l2->stats_form);
-      fl_free_form(form_stats_l2->stats_form);
+            pthread_join(forms_thread,&status);
+            fl_hide_form(form_stats->stats_form);
+            fl_free_form(form_stats->stats_form);
 
-      for(UE_id=0; UE_id<scope_enb_num_ue; UE_id++) {
-	for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-	  fl_hide_form(form_enb[CC_id][UE_id]->lte_phy_scope_enb);
-	  fl_free_form(form_enb[CC_id][UE_id]->lte_phy_scope_enb);
-	}
-      }
-    }
+            if (UE_flag==1) {
+
+                    fl_hide_form(form_ue[0]->lte_phy_scope_ue);
+                    fl_free_form(form_ue[0]->lte_phy_scope_ue);
+            } 
+
+            else {
+
+                    fl_hide_form(form_stats_l2->stats_form);
+                    fl_free_form(form_stats_l2->stats_form);
+
+                    for(UE_id=0; UE_id<scope_enb_num_ue; UE_id++) {
+
+                      	for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+
+                            	  fl_hide_form(form_enb[CC_id][UE_id]->lte_phy_scope_enb);
+                            	  fl_free_form(form_enb[CC_id][UE_id]->lte_phy_scope_enb);
+                      	}
+                    }
+            }
   }
 
 #endif
@@ -1951,8 +2051,12 @@ int main( int argc, char **argv )
 
   // cleanup
   if (UE_flag == 1) {
-  } else {
+  } 
+
+  else {
+
     stop_eNB(1);
+
   }
 
 
@@ -1962,24 +2066,34 @@ int main( int argc, char **argv )
 
   // *** Handle per CC_id openair0
   if (UE_flag==1) {
-    if (PHY_vars_UE_g[0][0]->rfdevice.trx_end_func)
-      PHY_vars_UE_g[0][0]->rfdevice.trx_end_func(&PHY_vars_UE_g[0][0]->rfdevice);
+
+          if (PHY_vars_UE_g[0][0]->rfdevice.trx_end_func)
+
+                PHY_vars_UE_g[0][0]->rfdevice.trx_end_func(&PHY_vars_UE_g[0][0]->rfdevice);
   }
   else {
-    for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      if (PHY_vars_eNB_g[0][CC_id]->rfdevice.trx_end_func)
-	PHY_vars_eNB_g[0][CC_id]->rfdevice.trx_end_func(&PHY_vars_eNB_g[0][CC_id]->rfdevice);  
-      if (PHY_vars_eNB_g[0][CC_id]->ifdevice.trx_end_func)
-	PHY_vars_eNB_g[0][CC_id]->ifdevice.trx_end_func(&PHY_vars_eNB_g[0][CC_id]->ifdevice);  
-    }
+
+          for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
+
+                    if (PHY_vars_eNB_g[0][CC_id]->rfdevice.trx_end_func)
+
+                      	PHY_vars_eNB_g[0][CC_id]->rfdevice.trx_end_func(&PHY_vars_eNB_g[0][CC_id]->rfdevice);  
+
+                    if (PHY_vars_eNB_g[0][CC_id]->ifdevice.trx_end_func)
+
+                      	PHY_vars_eNB_g[0][CC_id]->ifdevice.trx_end_func(&PHY_vars_eNB_g[0][CC_id]->ifdevice);  
+          }
   }
+
   if (ouput_vcd)
-    VCD_SIGNAL_DUMPER_CLOSE();
+
+        VCD_SIGNAL_DUMPER_CLOSE();
 
   if (opt_enabled == 1)
-    terminate_opt();
+    
+        terminate_opt();
 
-  logClean();
+        logClean();
 
   return 0;
 }

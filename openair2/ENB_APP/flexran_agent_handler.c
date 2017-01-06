@@ -104,7 +104,7 @@ Protocol__FlexranMessage* flexran_agent_handle_message (mid_t mod_id,
     goto error;
 
   }
-    
+    printf("==================>   %d    %d  \n", decoded_message->msg_case, decoded_message->msg_dir);
   if (agent_messages_callback[decoded_message->msg_case-1][decoded_message->msg_dir-1] == NULL) {
 
         err_code= PROTOCOL__FLEXRAN_ERR__MSG_NOT_SUPPORTED;

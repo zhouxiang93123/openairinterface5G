@@ -567,9 +567,12 @@ uint8_t do_SIB1(uint8_t Mod_id, int CC_id,
   (*sib1)->systemInfoValueTag=0;
   //  (*sib1).nonCriticalExtension = calloc(1,sizeof(*(*sib1).nonCriticalExtension));
 
-#ifdef XER_PRINT
-  xer_fprint(stdout, &asn_DEF_BCCH_DL_SCH_Message, (void*)bcch_message);
-#endif
+// Dump RRC information
+
+//#ifdef XER_PRINT
+ // xer_fprint(stdout, &asn_DEF_BCCH_DL_SCH_Message, (void*)bcch_message);
+//#endif
+  
   enc_rval = uper_encode_to_buffer(&asn_DEF_BCCH_DL_SCH_Message,
                                    (void*)bcch_message,
                                    buffer,
@@ -1111,9 +1114,9 @@ uint8_t do_SIB23(uint8_t Mod_id,
 #endif
 
 
-#ifdef XER_PRINT
-  xer_fprint(stdout, &asn_DEF_BCCH_DL_SCH_Message, (void*)bcch_message);
-#endif
+//#ifdef XER_PRINT
+//  xer_fprint(stdout, &asn_DEF_BCCH_DL_SCH_Message, (void*)bcch_message);
+//#endif
   enc_rval = uper_encode_to_buffer(&asn_DEF_BCCH_DL_SCH_Message,
                                    (void*)bcch_message,
                                    buffer,

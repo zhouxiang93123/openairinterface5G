@@ -381,12 +381,16 @@ int mac_init_global_param(void)
   //  Mac_rlc_xface->frame = 0;
   //  Mac_rlc_xface->mac_config_req=mac_config_req;
   //  Mac_rlc_xface->mac_meas_req=mac_meas_req;
+
+  //------------------ RRC functions turn on when it's important -------------------------------------------------
+
   //  Mac_rlc_xface->rrc_rlc_config_req=rrc_rlc_config_req;
   //  Mac_rlc_xface->rrc_rlc_data_req=rrc_rlc_data_req;
   //  Mac_rlc_xface->rrc_rlc_register_rrc=rrc_rlc_register_rrc;
 
   //  Mac_rlc_xface->rrc_mac_config_req=rrc_mac_config_req;
-
+  //  ------------ RRC functions turn on when it's important -------------------------------------------------
+  
   //  LOG_I(MAC,"[MAIN] INIT_GLOBAL_PARAM: Mac_rlc_xface=%p,rrc_rlc_register_rrc =%p\n",Mac_rlc_xface,Mac_rlc_xface->rrc_rlc_register_rrc);
 
   //  Mac_rlc_xface->mac_rlc_data_req=mac_rlc_data_req;
