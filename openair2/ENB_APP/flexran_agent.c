@@ -85,6 +85,7 @@ void *receive_thread(void *args) {
     
       // check if there is something to send back to the controller
       if (msg != NULL){
+        
 	         data = flexran_agent_pack_message(msg,&size);
 
 	          if (flexran_agent_msg_send(d->enb_id, FLEXRAN_AGENT_DEFAULT, data, size, priority)) {

@@ -211,11 +211,11 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
 
   case PROTOCOL__FLEX_STATS_REQUEST__BODY_COMPLETE_STATS_REQUEST: ;
 
-             printf("======handler stats======    complete stats request\n");
+             
               Protocol__FlexCompleteStatsRequest *comp_req = stats_req->complete_stats_request;
 
               if (comp_req->report_frequency == PROTOCOL__FLEX_STATS_REPORT_FREQ__FLSRF_OFF) {
-                            printf("=====handler stats=======   off mode\n");
+             
                             /*Disable both periodic and continuous updates*/
                             flexran_agent_disable_cont_mac_stats_update(mod_id);
                             flexran_agent_destroy_timer_by_task_id(xid);
@@ -227,18 +227,18 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
                             ue_flags = comp_req->ue_report_flags;
                             c_flags = comp_req->cell_report_flags;
                             //Create a list of all eNB RNTIs and cells
-                            printf("=======handler stats============  non off mode   %d   \n", flexran_get_current_frame (mod_id));
+             
                             //Set the number of UEs and create list with their RNTIs stats configs
                             report_config.nr_ue = flexran_get_num_ues(mod_id); //eNB_UE_list->num_UEs
                             report_config.ue_report_type = (ue_report_type_t *) malloc(sizeof(ue_report_type_t) * report_config.nr_ue);
                             if (report_config.ue_report_type == NULL) {
                                       // TODO: Add appropriate error code
-                                      printf("=====handler stats========   ue report nulll\n");
+
                                       err_code = -100;
                                       goto error;
                             }
                             for (i = 0; i < report_config.nr_ue; i++) {
-                              printf("===== ue crnti  %d  \n", flexran_get_ue_crnti(enb_id, i));
+ 
                                     	report_config.ue_report_type[i].ue_rnti = flexran_get_ue_crnti(enb_id, i); //eNB_UE_list->eNB_UE_stats[UE_PCCID(enb_id,i)][i].crnti;
                                     	report_config.ue_report_type[i].ue_report_flags = ue_flags;
                             }
@@ -257,7 +257,7 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
                             }
                             /* Check if request was periodical */
                             if (comp_req->report_frequency == PROTOCOL__FLEX_STATS_REPORT_FREQ__FLSRF_PERIODICAL) {
-                                        printf("===handler stats============= period  ============\n");
+ 
                                       	/* Create a one off flexran message as an argument for the periodical task */
                                       	Protocol__FlexranMessage *timer_msg;
                                       	stats_request_config_t request_config;
@@ -305,7 +305,7 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
                                else if (comp_req->report_frequency == PROTOCOL__FLEX_STATS_REPORT_FREQ__FLSRF_CONTINUOUS) {
                                       	/*If request was for continuous updates, disable the previous configuration and
                                       	  set up a new one*/
-                                        printf("===handler stats=====  continuous\n");
+ 
                                       	flexran_agent_disable_cont_mac_stats_update(mod_id);
                                       	stats_request_config_t request_config;
                                       	request_config.report_type = PROTOCOL__FLEX_STATS_TYPE__FLST_COMPLETE_STATS;
@@ -333,7 +333,7 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
   case PROTOCOL__FLEX_STATS_REQUEST__BODY_CELL_STATS_REQUEST:;
             Protocol__FlexCellStatsRequest *cell_req = stats_req->cell_stats_request;
             // UE report config will be blank
-            printf("===handler stats=== cell stats\n");
+ 
             report_config.nr_ue = 0;
             report_config.ue_report_type = NULL;
             report_config.nr_cc = cell_req->n_cell;
@@ -356,7 +356,7 @@ int flexran_agent_mac_handle_stats(mid_t mod_id, const void *params, Protocol__F
   case PROTOCOL__FLEX_STATS_REQUEST__BODY_UE_STATS_REQUEST:;
             Protocol__FlexUeStatsRequest *ue_req = stats_req->ue_stats_request;
             // Cell report config will be blank
-            printf("================ ue stats request\n");
+ 
             report_config.nr_cc = 0;
             report_config.cc_report_type = NULL;
             report_config.nr_ue = ue_req->n_rnti;
